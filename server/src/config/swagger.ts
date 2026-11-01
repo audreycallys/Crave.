@@ -1,4 +1,3 @@
-
 import swaggerJsdoc from "swagger-jsdoc";
 
 const options: swaggerJsdoc.Options = {
@@ -15,6 +14,15 @@ const options: swaggerJsdoc.Options = {
         description: "Development Server",
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
   apis: ["./src/routes/**/*.ts"],
 };
