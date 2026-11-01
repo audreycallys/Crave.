@@ -10,3 +10,9 @@ export const createEntrySchema = z.object({
   rating: z.coerce.number().int().min(1).max(5),
   notes: z.string().optional(),
 });
+
+export const updateEntrySchema = createEntrySchema
+  .omit({
+    userId: true,
+  })
+  .partial();

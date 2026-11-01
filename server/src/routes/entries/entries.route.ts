@@ -63,7 +63,6 @@ const router = Router();
  */
 router.post("/", uploadSingleImage, EntriesController.createEntry);
 
-
 /**
  * @swagger
  * /api/entries:
@@ -97,5 +96,61 @@ router.get("/", EntriesController.getAllEntries);
  */
 router.get("/:id", EntriesController.getEntryById);
 
+/**
+ * @swagger
+ * /api/entries/{id}:
+ *   put:
+ *     summary: Update a culinary entry
+ *     tags: [Entries]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Entry ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               menuName:
+ *                 type: string
+ *                 example: Iced Matcha Latte
+ *               placeName:
+ *                 type: string
+ *                 example: Kopi Kenangan
+ *               category:
+ *                 type: string
+ *                 enum: [Food, Drink]
+ *               price:
+ *                 type: number
+ *                 example: 30000
+ *               dateTried:
+ *                 type: string
+ *                 format: date
+ *                 example: "2026-11-01"
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 4
+ *               notes:
+ *                 type: string
+ *                 example: Rasanya cukup enak
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Entry updated successfully
+ *       400:
+ *         description: Validation failed
+ *       404:
+ *         description: Entry not found
+ */
+router.put("/:id", uploadSingleImage, EntriesController.updateEntry);
 
 export default router;
