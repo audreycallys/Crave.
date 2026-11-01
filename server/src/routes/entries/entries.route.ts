@@ -1,8 +1,11 @@
 import { Router } from "express";
 import EntriesController from "../../controllers/entries/entries.controller";
 import { uploadSingleImage } from "../../middleware/upload.middleware";
+import { authMiddleware } from "../../middleware/auth.middleware";
 
 const router = Router();
+
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -10,6 +13,8 @@ const router = Router();
  *   post:
  *     summary: Create a new culinary entry
  *     tags: [Entries]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -17,7 +22,6 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - menuName
  *               - category
  *               - price
@@ -25,9 +29,6 @@ const router = Router();
  *               - rating
  *               - photo
  *             properties:
- *               userId:
- *                 type: integer
- *                 example: 1
  *               menuName:
  *                 type: string
  *                 example: Matcha Latte
@@ -52,6 +53,10 @@ const router = Router();
  *               notes:
  *                 type: string
  *                 example: Rasanya enak dan creamy
+ *               isPublic:
+ *                 type: string
+ *                 enum: ["true", "false"]
+ *                 example: "false"
  *               photo:
  *                 type: string
  *                 format: binary
@@ -60,6 +65,8 @@ const router = Router();
  *         description: Entry created successfully
  *       400:
  *         description: Validation failed or photo missing
+ *       401:
+ *         description: Unauthorized
  */
 router.post("/", uploadSingleImage, EntriesController.createEntry);
 
@@ -67,20 +74,42 @@ router.post("/", uploadSingleImage, EntriesController.createEntry);
  * @swagger
  * /api/entries:
  *   get:
- *     summary: Get all culinary entries
+ *     summary: Get all public culinary entries
  *     tags: [Entries]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Entries retrieved successfully
+ *         description: Public entries retrieved successfully
+ *       401:
+ *         description: Unauthorized
  */
 router.get("/", EntriesController.getAllEntries);
 
 /**
  * @swagger
+ * /api/entries/my:
+ *   get:
+ *     summary: Get all entries belonging to the logged-in user
+ *     tags: [Entries]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: My entries retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/my", EntriesController.getMyEntries);
+
+/**
+ * @swagger
  * /api/entries/{id}:
  *   get:
- *     summary: Get culinary entry by ID
+ *     summary: Get a public entry or an entry belonging to the logged-in user
  *     tags: [Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -91,6 +120,8 @@ router.get("/", EntriesController.getAllEntries);
  *     responses:
  *       200:
  *         description: Entry retrieved successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Entry not found
  */
@@ -100,8 +131,10 @@ router.get("/:id", EntriesController.getEntryById);
  * @swagger
  * /api/entries/{id}:
  *   put:
- *     summary: Update a culinary entry
+ *     summary: Update an entry belonging to the logged-in user
  *     tags: [Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -140,6 +173,10 @@ router.get("/:id", EntriesController.getEntryById);
  *               notes:
  *                 type: string
  *                 example: Rasanya cukup enak
+ *               isPublic:
+ *                 type: string
+ *                 enum: ["true", "false"]
+ *                 example: "true"
  *               photo:
  *                 type: string
  *                 format: binary
@@ -148,6 +185,8 @@ router.get("/:id", EntriesController.getEntryById);
  *         description: Entry updated successfully
  *       400:
  *         description: Validation failed
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Entry not found
  */
@@ -157,8 +196,10 @@ router.put("/:id", uploadSingleImage, EntriesController.updateEntry);
  * @swagger
  * /api/entries/{id}:
  *   delete:
- *     summary: Delete a culinary entry
+ *     summary: Delete an entry belonging to the logged-in user
  *     tags: [Entries]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -169,6 +210,8 @@ router.put("/:id", uploadSingleImage, EntriesController.updateEntry);
  *     responses:
  *       200:
  *         description: Entry deleted successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Entry not found
  */

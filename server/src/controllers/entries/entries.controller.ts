@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { db } from "../../config/db";
 import { foodEntriesTable } from "../../config/schema";
-import { eq, desc } from "drizzle-orm";
+import { AuthRequest } from "../../middleware/auth.middleware";
+import { and, eq, desc, or } from "drizzle-orm";
 import {
   createEntrySchema,
   updateEntrySchema,
@@ -9,9 +10,9 @@ import {
 import { uploadToCloudinary } from "../../services/cloudinary.service";
 
 export class EntriesController {
-  createEntry = async (req: Request, res: Response) => {
+  // Create entry
+  createEntry = async (req: AuthRequest, res: Response) => {
     try {
-      // Validation
       const validation = createEntrySchema.safeParse(req.body);
 
       if (!validation.success) {
@@ -23,7 +24,6 @@ export class EntriesController {
       }
 
       const {
-        userId,
         menuName,
         placeName,
         category,
@@ -31,6 +31,7 @@ export class EntriesController {
         dateTried,
         rating,
         notes,
+        isPublic,
       } = validation.data;
 
       // Check uploaded photo
@@ -43,14 +44,13 @@ export class EntriesController {
 
       // Upload photo to Cloudinary
       const uploadResult = await uploadToCloudinary(req.file.buffer);
-
       const photoUrl = uploadResult.secure_url;
 
       // Insert entry into database
       const [insertedEntry] = await db
         .insert(foodEntriesTable)
         .values({
-          userId,
+          userId: req.user!.id,
           menuName,
           placeName: placeName || null,
           category,
@@ -58,6 +58,7 @@ export class EntriesController {
           dateTried,
           rating,
           photoUrl,
+          isPublic: isPublic ?? false,
           notes: notes || null,
         })
         .$returningId();
@@ -85,17 +86,18 @@ export class EntriesController {
     }
   };
 
-  // Get all entries
-  getAllEntries = async (req: Request, res: Response) => {
+  // Get all public entries
+  getAllEntries = async (req: AuthRequest, res: Response) => {
     try {
       const entries = await db
         .select()
         .from(foodEntriesTable)
+        .where(eq(foodEntriesTable.isPublic, true))
         .orderBy(desc(foodEntriesTable.createdAt));
 
       return res.status(200).json({
         success: true,
-        message: "Entries retrieved successfully",
+        message: "Public entries retrieved successfully",
         data: {
           entries,
         },
@@ -111,8 +113,35 @@ export class EntriesController {
     }
   };
 
+  // Get my entries
+  getMyEntries = async (req: AuthRequest, res: Response) => {
+    try {
+      const entries = await db
+        .select()
+        .from(foodEntriesTable)
+        .where(eq(foodEntriesTable.userId, req.user!.id))
+        .orderBy(desc(foodEntriesTable.createdAt));
+
+      return res.status(200).json({
+        success: true,
+        message: "My entries retrieved successfully",
+        data: {
+          entries,
+        },
+      });
+    } catch (error: any) {
+      console.error("Get my entries error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  };
+
   // Get entry by ID
-  getEntryById = async (req: Request, res: Response) => {
+  getEntryById = async (req: AuthRequest, res: Response) => {
     try {
       const entryId = Number(req.params.id);
 
@@ -124,7 +153,13 @@ export class EntriesController {
       }
 
       const entry = await db.query.foodEntriesTable.findFirst({
-        where: eq(foodEntriesTable.id, entryId),
+        where: and(
+          eq(foodEntriesTable.id, entryId),
+          or(
+            eq(foodEntriesTable.isPublic, true),
+            eq(foodEntriesTable.userId, req.user!.id),
+          ),
+        ),
       });
 
       if (!entry) {
@@ -153,7 +188,7 @@ export class EntriesController {
   };
 
   // Update entry
-  updateEntry = async (req: Request, res: Response) => {
+  updateEntry = async (req: AuthRequest, res: Response) => {
     try {
       const entryId = Number(req.params.id);
 
@@ -164,9 +199,12 @@ export class EntriesController {
         });
       }
 
-      // Check whether entry exists
+      // Check whether entry belongs to the logged-in user
       const existingEntry = await db.query.foodEntriesTable.findFirst({
-        where: eq(foodEntriesTable.id, entryId),
+        where: and(
+          eq(foodEntriesTable.id, entryId),
+          eq(foodEntriesTable.userId, req.user!.id),
+        ),
       });
 
       if (!existingEntry) {
@@ -187,8 +225,16 @@ export class EntriesController {
         });
       }
 
-      const { menuName, placeName, category, price, dateTried, rating, notes } =
-        validation.data;
+      const {
+        menuName,
+        placeName,
+        category,
+        price,
+        dateTried,
+        rating,
+        notes,
+        isPublic,
+      } = validation.data;
 
       if (Object.keys(validation.data).length === 0 && !req.file) {
         return res.status(400).json({
@@ -207,6 +253,7 @@ export class EntriesController {
       if (dateTried !== undefined) updateData.dateTried = dateTried;
       if (rating !== undefined) updateData.rating = rating;
       if (notes !== undefined) updateData.notes = notes || null;
+      if (isPublic !== undefined) updateData.isPublic = isPublic;
 
       // Upload new photo if provided
       if (req.file) {
@@ -218,11 +265,19 @@ export class EntriesController {
       await db
         .update(foodEntriesTable)
         .set(updateData)
-        .where(eq(foodEntriesTable.id, entryId));
+        .where(
+          and(
+            eq(foodEntriesTable.id, entryId),
+            eq(foodEntriesTable.userId, req.user!.id),
+          ),
+        );
 
       // Get updated entry
       const updatedEntry = await db.query.foodEntriesTable.findFirst({
-        where: eq(foodEntriesTable.id, entryId),
+        where: and(
+          eq(foodEntriesTable.id, entryId),
+          eq(foodEntriesTable.userId, req.user!.id),
+        ),
       });
 
       return res.status(200).json({
@@ -244,7 +299,7 @@ export class EntriesController {
   };
 
   // Delete entry
-  deleteEntry = async (req: Request, res: Response) => {
+  deleteEntry = async (req: AuthRequest, res: Response) => {
     try {
       const entryId = Number(req.params.id);
 
@@ -255,9 +310,12 @@ export class EntriesController {
         });
       }
 
-      // Check whether entry exists
+      // Check whether entry belongs to the logged-in user
       const existingEntry = await db.query.foodEntriesTable.findFirst({
-        where: eq(foodEntriesTable.id, entryId),
+        where: and(
+          eq(foodEntriesTable.id, entryId),
+          eq(foodEntriesTable.userId, req.user!.id),
+        ),
       });
 
       if (!existingEntry) {
@@ -268,7 +326,14 @@ export class EntriesController {
       }
 
       // Delete entry from database
-      await db.delete(foodEntriesTable).where(eq(foodEntriesTable.id, entryId));
+      await db
+        .delete(foodEntriesTable)
+        .where(
+          and(
+            eq(foodEntriesTable.id, entryId),
+            eq(foodEntriesTable.userId, req.user!.id),
+          ),
+        );
 
       return res.status(200).json({
         success: true,

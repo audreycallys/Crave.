@@ -7,6 +7,7 @@ import {
   timestamp,
   decimal,
   date,
+  boolean,
 } from "drizzle-orm/mysql-core";
 
 // Available food entry categories
@@ -46,6 +47,7 @@ export const foodEntriesTable = mysqlTable("food_entries", {
   }).notNull(),
   rating: int("rating").notNull(),
   photoUrl: varchar("photo_url", { length: 500 }).notNull(),
+  isPublic: boolean("is_public").notNull().default(false),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
