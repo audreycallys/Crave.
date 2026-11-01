@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../../config/db";
 import { foodEntriesTable } from "../../config/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { createEntrySchema } from "../../validations/entries/entries.validation";
 import { uploadToCloudinary } from "../../services/cloudinary.service";
 
@@ -73,6 +73,73 @@ export class EntriesController {
       });
     } catch (error: any) {
       console.error("Create entry error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  };
+
+  // Get all entries
+  getAllEntries = async (req: Request, res: Response) => {
+    try {
+      const entries = await db
+        .select()
+        .from(foodEntriesTable)
+        .orderBy(desc(foodEntriesTable.createdAt));
+
+      return res.status(200).json({
+        success: true,
+        message: "Entries retrieved successfully",
+        data: {
+          entries,
+        },
+      });
+    } catch (error: any) {
+      console.error("Get entries error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  };
+
+  // Get entry by ID
+  getEntryById = async (req: Request, res: Response) => {
+    try {
+      const entryId = Number(req.params.id);
+
+      if (!Number.isInteger(entryId) || entryId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid entry ID",
+        });
+      }
+
+      const entry = await db.query.foodEntriesTable.findFirst({
+        where: eq(foodEntriesTable.id, entryId),
+      });
+
+      if (!entry) {
+        return res.status(404).json({
+          success: false,
+          message: "Entry not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Entry retrieved successfully",
+        data: {
+          entry,
+        },
+      });
+    } catch (error: any) {
+      console.error("Get entry detail error:", error);
 
       return res.status(500).json({
         success: false,

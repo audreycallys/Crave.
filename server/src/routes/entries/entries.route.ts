@@ -63,4 +63,39 @@ const router = Router();
  */
 router.post("/", uploadSingleImage, EntriesController.createEntry);
 
+
+/**
+ * @swagger
+ * /api/entries:
+ *   get:
+ *     summary: Get all culinary entries
+ *     tags: [Entries]
+ *     responses:
+ *       200:
+ *         description: Entries retrieved successfully
+ */
+router.get("/", EntriesController.getAllEntries);
+
+/**
+ * @swagger
+ * /api/entries/{id}:
+ *   get:
+ *     summary: Get culinary entry by ID
+ *     tags: [Entries]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Entry ID
+ *     responses:
+ *       200:
+ *         description: Entry retrieved successfully
+ *       404:
+ *         description: Entry not found
+ */
+router.get("/:id", EntriesController.getEntryById);
+
+
 export default router;
