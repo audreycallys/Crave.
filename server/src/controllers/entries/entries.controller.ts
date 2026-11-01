@@ -242,6 +242,48 @@ export class EntriesController {
       });
     }
   };
+
+  // Delete entry
+  deleteEntry = async (req: Request, res: Response) => {
+    try {
+      const entryId = Number(req.params.id);
+
+      if (!Number.isInteger(entryId) || entryId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid entry ID",
+        });
+      }
+
+      // Check whether entry exists
+      const existingEntry = await db.query.foodEntriesTable.findFirst({
+        where: eq(foodEntriesTable.id, entryId),
+      });
+
+      if (!existingEntry) {
+        return res.status(404).json({
+          success: false,
+          message: "Entry not found",
+        });
+      }
+
+      // Delete entry from database
+      await db.delete(foodEntriesTable).where(eq(foodEntriesTable.id, entryId));
+
+      return res.status(200).json({
+        success: true,
+        message: "Entry deleted successfully",
+      });
+    } catch (error: any) {
+      console.error("Delete entry error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  };
 }
 
 export default new EntriesController();

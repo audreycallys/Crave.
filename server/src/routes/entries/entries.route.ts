@@ -153,4 +153,25 @@ router.get("/:id", EntriesController.getEntryById);
  */
 router.put("/:id", uploadSingleImage, EntriesController.updateEntry);
 
+/**
+ * @swagger
+ * /api/entries/{id}:
+ *   delete:
+ *     summary: Delete a culinary entry
+ *     tags: [Entries]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Entry ID
+ *     responses:
+ *       200:
+ *         description: Entry deleted successfully
+ *       404:
+ *         description: Entry not found
+ */
+router.delete("/:id", EntriesController.deleteEntry);
+
 export default router;
