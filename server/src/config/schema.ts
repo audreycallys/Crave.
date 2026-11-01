@@ -47,6 +47,7 @@ export const foodEntriesTable = mysqlTable("food_entries", {
   }).notNull(),
   rating: int("rating").notNull(),
   photoUrl: varchar("photo_url", { length: 500 }).notNull(),
+  photoPublicId: varchar("photo_public_id", { length: 255 }),
   isPublic: boolean("is_public").notNull().default(false),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

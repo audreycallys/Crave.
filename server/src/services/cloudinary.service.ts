@@ -5,10 +5,7 @@ export const uploadToCloudinary = (
 ): Promise<{ secure_url: string; public_id: string }> => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: "crave",
-        resource_type: "image",
-      },
+      { folder: "crave", resource_type: "image" },
       (error, result) => {
         if (error || !result) {
           return reject(error || new Error("Image upload failed"));
@@ -22,5 +19,23 @@ export const uploadToCloudinary = (
     );
 
     uploadStream.end(fileBuffer);
+  });
+};
+
+// Delete from Cloudinary
+export const deleteFromCloudinary = (publicId: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(
+      publicId,
+      { resource_type: "image" },
+      (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      },
+    );
   });
 };
