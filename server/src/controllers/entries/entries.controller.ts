@@ -7,11 +7,16 @@ import {
   createEntrySchema,
   updateEntrySchema,
 } from "../../validations/entries/entries.validation";
-import { uploadToCloudinary } from "../../services/cloudinary.service";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../../services/cloudinary.service";
 
 export class EntriesController {
   // Create entry
   createEntry = async (req: AuthRequest, res: Response) => {
+    let uploadedPhotoPublicId: string | null = null;
+
     try {
       const validation = createEntrySchema.safeParse(req.body);
 
@@ -44,7 +49,7 @@ export class EntriesController {
 
       // Upload photo to Cloudinary
       const uploadResult = await uploadToCloudinary(req.file.buffer);
-      const photoUrl = uploadResult.secure_url;
+      uploadedPhotoPublicId = uploadResult.public_id;
 
       // Insert entry into database
       const [insertedEntry] = await db
@@ -57,7 +62,8 @@ export class EntriesController {
           price: price.toFixed(2),
           dateTried,
           rating,
-          photoUrl,
+          photoUrl: uploadResult.secure_url,
+          photoPublicId: uploadResult.public_id,
           isPublic: isPublic ?? false,
           notes: notes || null,
         })
@@ -77,6 +83,15 @@ export class EntriesController {
       });
     } catch (error: any) {
       console.error("Create entry error:", error);
+
+      // Clean up uploaded photo if database operation failed
+      if (uploadedPhotoPublicId) {
+        try {
+          await deleteFromCloudinary(uploadedPhotoPublicId);
+        } catch (deleteError) {
+          console.error("Delete uploaded photo error:", deleteError);
+        }
+      }
 
       return res.status(500).json({
         success: false,
@@ -189,6 +204,9 @@ export class EntriesController {
 
   // Update entry
   updateEntry = async (req: AuthRequest, res: Response) => {
+    let newPhotoPublicId: string | null = null;
+    let databaseUpdated = false;
+
     try {
       const entryId = Number(req.params.id);
 
@@ -258,7 +276,10 @@ export class EntriesController {
       // Upload new photo if provided
       if (req.file) {
         const uploadResult = await uploadToCloudinary(req.file.buffer);
+
+        newPhotoPublicId = uploadResult.public_id;
         updateData.photoUrl = uploadResult.secure_url;
+        updateData.photoPublicId = uploadResult.public_id;
       }
 
       // Update database
@@ -271,6 +292,17 @@ export class EntriesController {
             eq(foodEntriesTable.userId, req.user!.id),
           ),
         );
+
+      databaseUpdated = true;
+
+      // Delete old photo from Cloudinary
+      if (req.file && existingEntry.photoPublicId) {
+        try {
+          await deleteFromCloudinary(existingEntry.photoPublicId);
+        } catch (error) {
+          console.error("Delete old photo error:", error);
+        }
+      }
 
       // Get updated entry
       const updatedEntry = await db.query.foodEntriesTable.findFirst({
@@ -289,6 +321,15 @@ export class EntriesController {
       });
     } catch (error: any) {
       console.error("Update entry error:", error);
+
+      // Clean up new photo if database update failed
+      if (newPhotoPublicId && !databaseUpdated) {
+        try {
+          await deleteFromCloudinary(newPhotoPublicId);
+        } catch (deleteError) {
+          console.error("Delete new photo error:", deleteError);
+        }
+      }
 
       return res.status(500).json({
         success: false,
@@ -334,6 +375,15 @@ export class EntriesController {
             eq(foodEntriesTable.userId, req.user!.id),
           ),
         );
+
+      // Delete photo from Cloudinary
+      if (existingEntry.photoPublicId) {
+        try {
+          await deleteFromCloudinary(existingEntry.photoPublicId);
+        } catch (error) {
+          console.error("Delete photo from Cloudinary error:", error);
+        }
+      }
 
       return res.status(200).json({
         success: true,
