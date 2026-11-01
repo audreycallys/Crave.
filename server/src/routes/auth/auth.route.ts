@@ -25,10 +25,10 @@ const router = Router();
  *                 example: Audrey Callysta Nevaely
  *               email:
  *                 type: string
- *                 example: audrey@example.com
+ *                 example: user@example.com
  *               password:
  *                 type: string
- *                 example: rahasia123
+ *                 example: odeycantik
  *     responses:
  *       201:
  *         description: Register successful
@@ -53,10 +53,10 @@ router.post("/register", AuthController.register);
  *             properties:
  *               email:
  *                 type: string
- *                 example: audrey@example.com
+ *                 example: user@example.com
  *               password:
  *                 type: string
- *                 example: rahasia123
+ *                 example: odeycantik
  *     responses:
  *       200:
  *         description: Login successful
