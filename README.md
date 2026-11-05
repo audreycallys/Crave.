@@ -1,48 +1,28 @@
-# Crave — Your Personal Food Journal
+# Crave — Social Culinary Journal
 
-Crave is a personal food and drink journaling application that helps users document their culinary experiences.
+Crave is a mobile application designed to help users document and share their food and drink experiences. It works as a personal culinary journal where users can upload photos, record menu names, prices, locations, dates, ratings, and personal notes about the food and drinks they have tried.
 
-Users can upload food photos, record menu names, save restaurant or cafe details, add prices, rate their experiences, and write personal notes.
+Users can manage their entries by setting them as **Public** or **Private**. Public entries can be viewed by other registered users, while private entries remain accessible only to their owners.
 
-Crave is designed as a personal culinary diary, not a food delivery or food ordering application.
+Crave aims to provide a simple way to keep track of culinary experiences, discover what others have tried, and build a personal collection of food and drink memories.
 
-## Features
+## Key Features
+- User registration and login.
+- Create, view, update, and delete culinary entries.
+- Upload food and drink photos.
+- Record menu details, prices, locations, dates, and ratings.
+- Set entries as Public or Private.
+- Explore public culinary entries from other users.
+- Manage personal culinary records.
 
-- User registration and login
-- Personal food and drink journal
-- Upload food photos
-- Record menu names, places, prices, dates, and ratings
-- Write personal notes and reviews
-- View, edit, and delete journal entries
-- Manage user profiles
-
-## Tech Stack
-
-### Mobile
+## Technologies
 - Flutter
 - Dart
-
-### Backend
 - Node.js
 - Express.js
 - TypeScript
 - MySQL
+- Drizzle ORM
 - JWT Authentication
 - Cloudinary
-
-## Project Structure
-
-```text
-crave/
-├── mobile/    # Flutter mobile application
-├── server/    # Express.js REST API
-└── README.md  # Project documentation
-```
-
-## Project Status
-
-Currently in development.
-
-## Author
-
-Audrey Callysta Nevaely
+- Swagger
