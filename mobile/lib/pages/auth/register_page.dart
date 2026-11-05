@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../services/api_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,6 +21,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
 
+  bool isLoading = false;
+
   @override
   void dispose() {
     nameController.dispose();
@@ -29,13 +32,44 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void handleRegister() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> handleRegister() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final response = await ApiService.post('/auth/register', {
+        'name': nameController.text.trim(),
+        'email': emailController.text.trim(),
+        'password': passwordController.text,
+      });
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Register akan dihubungkan ke API nanti.'),
+        SnackBar(
+          content: Text(response['message'] ?? 'Registration successful'),
         ),
       );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -193,8 +227,17 @@ class _RegisterPageState extends State<RegisterPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: handleRegister,
-                        child: const Text('Create Account'),
+                        onPressed: isLoading ? null : handleRegister,
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : const Text('Create Account'),
                       ),
                     ),
 
