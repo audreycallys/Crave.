@@ -146,6 +146,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               tooltip: 'Edit entry',
               icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
             ),
+            IconButton(
+              onPressed: deleteEntry,
+              tooltip: 'Delete entry',
+              icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+            ),
           ],
         ),
         SliverToBoxAdapter(
@@ -381,5 +386,50 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> deleteEntry() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Entry?'),
+          content: const Text(
+            'Are you sure you want to delete this entry? '
+            'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      await ApiService.delete('/entries/${widget.entryId}');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entry deleted successfully')),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete entry: $e')));
+    }
   }
 }
