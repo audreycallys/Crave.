@@ -4,6 +4,7 @@ import 'core/theme/app_theme.dart';
 import 'pages/splash_page.dart';
 import 'pages/home/home_page.dart';
 import 'services/api_service.dart';
+import 'pages/main_page.dart';
 
 void main() {
   runApp(const CraveApp());
@@ -66,6 +67,6 @@ class _AuthGateState extends State<AuthGate> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return isLoggedIn ? const HomePage() : const SplashPage();
+    return isLoggedIn ? const MainPage() : const SplashPage();
   }
 }

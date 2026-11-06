@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import 'register_page.dart';
 import '../../services/api_service.dart';
 import '../home/home_page.dart';
+import '../main_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -49,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const MainPage()),
       );
     } catch (error) {
       if (!mounted) return;
