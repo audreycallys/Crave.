@@ -8,10 +8,10 @@ class MyEntriesPage extends StatefulWidget {
   const MyEntriesPage({super.key});
 
   @override
-  State<MyEntriesPage> createState() => _MyEntriesPageState();
+  State<MyEntriesPage> createState() => MyEntriesPageState();
 }
 
-class _MyEntriesPageState extends State<MyEntriesPage> {
+class MyEntriesPageState extends State<MyEntriesPage> {
   List<dynamic> entries = [];
   bool isLoading = true;
   String? errorMessage;
@@ -146,12 +146,25 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Text(
-                    '${filteredEntries.length} entries',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '${filteredEntries.length} entries',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: isLoading ? null : fetchMyEntries,
+                        tooltip: 'Refresh entries',
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

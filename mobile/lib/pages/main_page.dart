@@ -4,6 +4,7 @@ import '../core/theme/app_colors.dart';
 
 import 'home/home_page.dart';
 import 'entries/my_entries_page.dart';
+import 'entries/add_entry_page.dart';
 
 import '../widgets/floating_bottom_nav.dart';
 
@@ -17,19 +18,22 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int selectedIndex = 0;
 
-  final List<Widget> pages = [
+  final GlobalKey<MyEntriesPageState> _myEntriesKey =
+      GlobalKey<MyEntriesPageState>();
+
+  late final List<Widget> pages = [
     const HomePage(),
     const _PlaceholderPage(
       title: 'Explore',
       description: 'Discover culinary experiences from others.',
       icon: Icons.explore_outlined,
     ),
-    const _PlaceholderPage(
-      title: 'Add Entry',
-      description: 'Record your latest culinary experience.',
-      icon: Icons.add_circle_outline_rounded,
+    AddEntryPage(
+      onEntryCreated: () {
+        _myEntriesKey.currentState?.fetchMyEntries();
+      },
     ),
-    const MyEntriesPage(),
+    MyEntriesPage(key: _myEntriesKey),
     const _PlaceholderPage(
       title: 'Profile',
       description: 'Manage your Crave account.',
