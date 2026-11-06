@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../services/api_service.dart';
-import '../../widgets/entry_card.dart';
+import '../../widgets/entry_grid_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -401,8 +401,21 @@ class _HomePageState extends State<HomePage> {
             },
           )
         else
-          ...filteredEntries.map(
-            (entry) => EntryCard(entry: Map<String, dynamic>.from(entry)),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filteredEntries.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.67,
+            ),
+            itemBuilder: (context, index) {
+              return EntryGridCard(
+                entry: Map<String, dynamic>.from(filteredEntries[index]),
+              );
+            },
           ),
       ],
     );
