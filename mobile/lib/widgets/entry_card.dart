@@ -21,16 +21,53 @@ class EntryCard extends StatelessWidget {
     return 'Rp$formatted';
   }
 
+  String formatDate(dynamic date) {
+    if (date == null || date.toString().isEmpty) return '';
+
+    final parsedDate = DateTime.tryParse(date.toString());
+
+    if (parsedDate == null) return date.toString();
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final photoUrl = entry['photoUrl']?.toString() ?? '';
+    final category = entry['category']?.toString() ?? 'Food';
+    final menuName = entry['menuName']?.toString() ?? 'Untitled';
+    final placeName = entry['placeName']?.toString() ?? '';
+    final date = formatDate(entry['dateTried']);
+    final rating = entry['rating'] ?? 0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 22),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -39,111 +76,188 @@ class EntryCard extends StatelessWidget {
           // Food photo
           AspectRatio(
             aspectRatio: 16 / 10,
-            child: photoUrl.isNotEmpty
-                ? Image.network(
-                    photoUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _imagePlaceholder();
-                    },
-                  )
-                : _imagePlaceholder(),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                // Category and rating
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        entry['category']?.toString() ?? 'Food',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                photoUrl.isNotEmpty
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _imagePlaceholder();
+                        },
+                      )
+                    : _imagePlaceholder(),
+
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          category == 'Drink'
+                              ? Icons.local_cafe_rounded
+                              : Icons.restaurant_rounded,
+                          size: 14,
                           color: AppColors.primary,
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Row(
+                  ),
+                ),
+
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
                           Icons.star_rounded,
                           color: Color(0xFFD6A928),
-                          size: 18,
+                          size: 16,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${entry['rating'] ?? 0}/5',
+                          '$rating/5',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+          ),
 
-                const SizedBox(height: 12),
-
-                // Menu name
+          // Entry information
+          Padding(
+            padding: const EdgeInsets.all(17),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  entry['menuName']?.toString() ?? 'Untitled',
+                  menuName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(height: 9),
 
-                // Place
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        entry['placeName']?.toString() ?? '-',
+                if (placeName.isNotEmpty)
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          placeName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                if (date.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        date,
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
 
+                const SizedBox(height: 16),
+                const Divider(color: AppColors.border, height: 1),
                 const SizedBox(height: 14),
 
-                // Price
-                Text(
-                  formatPrice(entry['price'] ?? 0),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.auto_stories_rounded,
+                          size: 15,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Food experience',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      formatPrice(entry['price'] ?? 0),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
