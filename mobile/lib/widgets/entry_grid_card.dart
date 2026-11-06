@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../pages/entries/entry_detail_page.dart';
 
 class EntryGridCard extends StatelessWidget {
   final Map<String, dynamic> entry;
@@ -21,97 +22,113 @@ class EntryGridCard extends StatelessWidget {
     return 'Rp$formatted';
   }
 
+  void openDetail(BuildContext context) {
+    final entryId = entry['id'];
+
+    if (entryId == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EntryDetailPage(entryId: entryId.toString()),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final photoUrl = entry['photoUrl']?.toString() ?? '';
     final category = entry['category']?.toString() ?? 'Food';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: photoUrl.isNotEmpty
-                ? Image.network(
-                    photoUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _placeholder();
-                    },
-                  )
-                : _placeholder(),
-          ),
+    return GestureDetector(
+      onTap: () => openDetail(context),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: photoUrl.isNotEmpty
+                  ? Image.network(
+                      photoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _placeholder();
+                      },
+                    )
+                  : _placeholder(),
+            ),
 
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  category.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  entry['menuName']?.toString() ?? 'Untitled',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      size: 15,
-                      color: Color(0xFFD6A928),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                      letterSpacing: 0.6,
                     ),
-                    const SizedBox(width: 3),
-                    Text(
-                      '${entry['rating'] ?? 0}/5',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    entry['menuName']?.toString() ?? 'Untitled',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 15,
+                        color: Color(0xFFD6A928),
                       ),
-                    ),
-                    const Spacer(),
-                    Flexible(
-                      child: Text(
-                        formatPrice(entry['price'] ?? 0),
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 3),
+                      Text(
+                        '${entry['rating'] ?? 0}/5',
                         style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const Spacer(),
+                      Flexible(
+                        child: Text(
+                          formatPrice(entry['price'] ?? 0),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
