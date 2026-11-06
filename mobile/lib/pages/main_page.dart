@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+
 import 'home/home_page.dart';
+import 'entries/my_entries_page.dart';
+
 import '../widgets/floating_bottom_nav.dart';
 
 class MainPage extends StatefulWidget {
@@ -26,11 +29,7 @@ class _MainPageState extends State<MainPage> {
       description: 'Record your latest culinary experience.',
       icon: Icons.add_circle_outline_rounded,
     ),
-    const _PlaceholderPage(
-      title: 'My Journal',
-      description: 'Your personal culinary collection.',
-      icon: Icons.book_outlined,
-    ),
+    const MyEntriesPage(),
     const _PlaceholderPage(
       title: 'Profile',
       description: 'Manage your Crave account.',
