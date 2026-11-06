@@ -156,4 +156,42 @@ class ApiService {
 
     return _handleResponse(response);
   }
+
+  static Future<dynamic> putMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    Uint8List? photoBytes,
+    String? fileName,
+    String? mimeType,
+  }) async {
+    final token = await getToken();
+
+    final request = http.MultipartRequest(
+      'PUT',
+      Uri.parse('$_baseUrl$endpoint'),
+    );
+
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+
+    request.fields.addAll(fields);
+
+    if (photoBytes != null && fileName != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photo',
+          photoBytes,
+          filename: fileName,
+          contentType: _getMediaType(fileName, mimeType),
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    return _handleResponse(response);
+  }
 }

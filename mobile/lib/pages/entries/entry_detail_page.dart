@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../services/api_service.dart';
+import 'add_entry_page.dart';
 
 class EntryDetailPage extends StatefulWidget {
   final String entryId;
@@ -45,6 +46,17 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         errorMessage = e.toString().replaceFirst('Exception: ', '');
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> editEntry() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => AddEntryPage(entry: entry!)),
+    );
+
+    if (result == true && mounted) {
+      await fetchDetail();
     }
   }
 
@@ -128,8 +140,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             ),
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed: editEntry,
+              tooltip: 'Edit entry',
+              icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+            ),
+          ],
         ),
-
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
@@ -151,13 +169,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                         : _imagePlaceholder(),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 _buildCategoryAndRating(category),
-
                 const SizedBox(height: 14),
-
                 Text(
                   entry!['menuName']?.toString() ?? 'Untitled',
                   style: const TextStyle(
@@ -166,13 +180,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-
                 const SizedBox(height: 22),
-
                 _buildInformation(),
-
                 const SizedBox(height: 26),
-
                 const Text(
                   'My Notes',
                   style: TextStyle(
@@ -181,9 +191,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),

@@ -6,8 +6,9 @@ import '../../services/api_service.dart';
 
 class AddEntryPage extends StatefulWidget {
   final VoidCallback? onEntryCreated;
+  final Map<String, dynamic>? entry;
 
-  const AddEntryPage({super.key, this.onEntryCreated});
+  const AddEntryPage({super.key, this.onEntryCreated, this.entry});
 
   @override
   State<AddEntryPage> createState() => _AddEntryPageState();
@@ -31,6 +32,35 @@ class _AddEntryPageState extends State<AddEntryPage> {
   int selectedRating = 5;
   bool isPublic = false;
   bool isLoading = false;
+
+  bool get isEditMode => widget.entry != null;
+
+  String get existingPhotoUrl => widget.entry?['photoUrl']?.toString() ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (isEditMode) {
+      final data = widget.entry!;
+
+      menuNameController.text = data['menuName']?.toString() ?? '';
+      placeNameController.text = data['placeName']?.toString() ?? '';
+      priceController.text = data['price']?.toString() ?? '';
+      notesController.text = data['notes']?.toString() ?? '';
+
+      selectedCategory = data['category']?.toString() ?? 'Food';
+
+      selectedDate =
+          DateTime.tryParse(data['dateTried']?.toString() ?? '') ??
+          DateTime.now();
+
+      selectedRating = int.tryParse(data['rating']?.toString() ?? '') ?? 5;
+
+      final visibility = data['isPublic'];
+      isPublic = visibility == true || visibility.toString() == 'true';
+    }
+  }
 
   @override
   void dispose() {
@@ -100,7 +130,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
   Future<void> submitEntry() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (selectedPhoto == null) {
+    if (!isEditMode && selectedPhoto == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a photo first.')),
       );
@@ -112,50 +142,79 @@ class _AddEntryPageState extends State<AddEntryPage> {
     });
 
     try {
-      final photoBytes = await selectedPhoto!.readAsBytes();
+      final fields = {
+        'menuName': menuNameController.text.trim(),
+        'placeName': placeNameController.text.trim(),
+        'category': selectedCategory,
+        'price': priceController.text.trim(),
+        'dateTried': formatDate(selectedDate),
+        'rating': selectedRating.toString(),
+        'notes': notesController.text.trim(),
+        'isPublic': isPublic.toString(),
+      };
 
-      final response = await ApiService.postMultipart(
-        '/entries',
-        fields: {
-          'menuName': menuNameController.text.trim(),
-          'placeName': placeNameController.text.trim(),
-          'category': selectedCategory,
-          'price': priceController.text.trim(),
-          'dateTried': formatDate(selectedDate),
-          'rating': selectedRating.toString(),
-          'notes': notesController.text.trim(),
-          'isPublic': isPublic.toString(),
-        },
-        photoBytes: photoBytes,
-        fileName: selectedPhoto!.name,
-        mimeType: 'image/jpeg',
-      );
+      final response;
+
+      if (isEditMode) {
+        final photoBytes = selectedPhoto != null
+            ? await selectedPhoto!.readAsBytes()
+            : null;
+
+        response = await ApiService.putMultipart(
+          '/entries/${widget.entry!['id']}',
+          fields: fields,
+          photoBytes: photoBytes,
+          fileName: selectedPhoto?.name,
+          mimeType: selectedPhoto?.mimeType,
+        );
+      } else {
+        final photoBytes = await selectedPhoto!.readAsBytes();
+
+        response = await ApiService.postMultipart(
+          '/entries',
+          fields: fields,
+          photoBytes: photoBytes,
+          fileName: selectedPhoto!.name,
+          mimeType: selectedPhoto!.mimeType,
+        );
+      }
 
       if (!mounted) return;
 
-      widget.onEntryCreated?.call();
+      if (isEditMode) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Entry updated successfully!'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response['message'] ?? 'Entry created successfully!'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
+        Navigator.pop(context, true);
+      } else {
+        widget.onEntryCreated?.call();
 
-      _formKey.currentState!.reset();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Entry created successfully!'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
 
-      menuNameController.clear();
-      placeNameController.clear();
-      priceController.clear();
-      notesController.clear();
+        _formKey.currentState!.reset();
 
-      setState(() {
-        selectedPhoto = null;
-        selectedCategory = 'Food';
-        selectedDate = DateTime.now();
-        selectedRating = 5;
-        isPublic = false;
-      });
+        menuNameController.clear();
+        placeNameController.clear();
+        priceController.clear();
+        notesController.clear();
+
+        setState(() {
+          selectedPhoto = null;
+          selectedCategory = 'Food';
+          selectedDate = DateTime.now();
+          selectedRating = 5;
+          isPublic = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -213,6 +272,67 @@ class _AddEntryPageState extends State<AddEntryPage> {
             const Text(' *', style: TextStyle(color: Colors.redAccent)),
         ],
       ),
+    );
+  }
+
+  Widget _buildPhotoPreview() {
+    if (selectedPhoto != null) {
+      return FutureBuilder(
+        future: selectedPhoto!.readAsBytes(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Image.memory(
+              snapshot.data!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            );
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+    }
+
+    if (existingPhotoUrl.isNotEmpty) {
+      return Image.network(
+        existingPhotoUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          return _photoPlaceholder();
+        },
+      );
+    }
+
+    return _photoPlaceholder();
+  }
+
+  Widget _photoPlaceholder() {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.add_photo_alternate_outlined,
+          size: 42,
+          color: AppColors.primary,
+        ),
+        SizedBox(height: 12),
+        Text(
+          'Add your food photo',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 5),
+        Text(
+          'Tap to choose from gallery',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 
@@ -395,18 +515,23 @@ class _AddEntryPageState extends State<AddEntryPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 130),
           children: [
-            const Text(
-              'Add Entry',
-              style: TextStyle(
+            Text(
+              isEditMode ? 'Edit Entry' : 'Add Entry',
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 5),
-            const Text(
-              'Capture a new culinary experience.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            Text(
+              isEditMode
+                  ? 'Update your culinary experience.'
+                  : 'Capture a new culinary experience.',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 28),
             Form(
@@ -414,7 +539,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _sectionTitle('Food Photo', required: true),
+                  _sectionTitle('Food Photo', required: !isEditMode),
                   GestureDetector(
                     onTap: isLoading ? null : pickPhoto,
                     child: Container(
@@ -426,76 +551,30 @@ class _AddEntryPageState extends State<AddEntryPage> {
                         border: Border.all(color: AppColors.border),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: selectedPhoto != null
-                          ? Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.network(
-                                  selectedPhoto!.path,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return FutureBuilder(
-                                      future: selectedPhoto!.readAsBytes(),
-                                      builder: (context, snapshot) {
-                                        if (snapshot.hasData) {
-                                          return Image.memory(
-                                            snapshot.data!,
-                                            fit: BoxFit.cover,
-                                          );
-                                        }
-
-                                        return const Center(
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      },
-                                    );
-                                  },
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildPhotoPreview(),
+                          if (selectedPhoto != null ||
+                              existingPhotoUrl.isNotEmpty)
+                            Positioned(
+                              right: 12,
+                              top: 12,
+                              child: Container(
+                                padding: const EdgeInsets.all(9),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.white,
+                                  shape: BoxShape.circle,
                                 ),
-                                Positioned(
-                                  right: 12,
-                                  top: 12,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(9),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.edit_rounded,
-                                      size: 18,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_photo_alternate_outlined,
-                                  size: 42,
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  size: 18,
                                   color: AppColors.primary,
                                 ),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Add your food photo',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                SizedBox(height: 5),
-                                Text(
-                                  'Tap to choose from gallery',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -629,9 +708,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
                                 color: AppColors.white,
                               ),
                             )
-                          : const Text(
-                              'Save Entry',
-                              style: TextStyle(
+                          : Text(
+                              isEditMode ? 'Save Changes' : 'Save Entry',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
