@@ -16,12 +16,15 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
   bool isLoading = true;
   String? errorMessage;
 
+  String selectedCategory = 'All';
+
   @override
   void initState() {
     super.initState();
     fetchMyEntries();
   }
 
+  // Fetch all entries belonging to the logged-in user
   Future<void> fetchMyEntries() async {
     setState(() {
       isLoading = true;
@@ -45,6 +48,58 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
         isLoading = false;
       });
     }
+  }
+
+  // Filter entries based on selected category
+  List<dynamic> get filteredEntries {
+    if (selectedCategory == 'All') {
+      return entries;
+    }
+
+    return entries.where((entry) {
+      return entry['category'] == selectedCategory;
+    }).toList();
+  }
+
+  // Category filter widget
+  Widget _buildCategoryFilter() {
+    final categories = ['All', 'Food', 'Drink'];
+
+    return Row(
+      children: categories.map((category) {
+        final isSelected = selectedCategory == category;
+
+        return Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedCategory = category;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.white,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.border,
+                ),
+              ),
+              child: Text(
+                category,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.white : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -76,6 +131,10 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
 
               const SizedBox(height: 28),
 
+              _buildCategoryFilter(),
+
+              const SizedBox(height: 24),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -88,7 +147,7 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
                     ),
                   ),
                   Text(
-                    '${entries.length} entries',
+                    '${filteredEntries.length} entries',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -119,8 +178,21 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
                       'Start saving your favorite culinary experiences here.',
                   buttonText: 'Refresh',
                 )
+              else if (filteredEntries.isEmpty)
+                _buildMessage(
+                  icon: Icons.search_off_rounded,
+                  title: 'No entries found',
+                  description:
+                      'You have no ${selectedCategory.toLowerCase()} entries yet.',
+                  buttonText: 'Show all',
+                  onPressed: () {
+                    setState(() {
+                      selectedCategory = 'All';
+                    });
+                  },
+                )
               else
-                ...entries.map(
+                ...filteredEntries.map(
                   (entry) => EntryCard(entry: Map<String, dynamic>.from(entry)),
                 ),
             ],
@@ -135,13 +207,16 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
     required String title,
     required String description,
     required String buttonText,
+    VoidCallback? onPressed,
   }) {
     return Padding(
       padding: const EdgeInsets.only(top: 70),
       child: Column(
         children: [
           Icon(icon, size: 55, color: AppColors.primary),
+
           const SizedBox(height: 18),
+
           Text(
             title,
             textAlign: TextAlign.center,
@@ -151,7 +226,9 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
               color: AppColors.textPrimary,
             ),
           ),
+
           const SizedBox(height: 8),
+
           Text(
             description,
             textAlign: TextAlign.center,
@@ -161,8 +238,13 @@ class _MyEntriesPageState extends State<MyEntriesPage> {
               color: AppColors.textSecondary,
             ),
           ),
+
           const SizedBox(height: 20),
-          OutlinedButton(onPressed: fetchMyEntries, child: Text(buttonText)),
+
+          OutlinedButton(
+            onPressed: onPressed ?? fetchMyEntries,
+            child: Text(buttonText),
+          ),
         ],
       ),
     );
