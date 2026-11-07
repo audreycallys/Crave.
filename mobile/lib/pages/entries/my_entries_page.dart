@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/entry_card.dart';
+import '../../widgets/category_filter.dart';
 
 class MyEntriesPage extends StatefulWidget {
   final VoidCallback? onEntryChanged;
@@ -66,43 +67,6 @@ class MyEntriesPageState extends State<MyEntriesPage> {
         .toList();
   }
 
-  Widget _buildCategoryFilter() {
-    final categories = ['All', 'Food', 'Drink'];
-
-    return Row(
-      children: categories.map((category) {
-        final isSelected = selectedCategory == category;
-
-        return Padding(
-          padding: const EdgeInsets.only(right: 9),
-          child: ChoiceChip(
-            label: Text(category),
-            selected: isSelected,
-            onSelected: (_) {
-              setState(() {
-                selectedCategory = category;
-              });
-            },
-            selectedColor: AppColors.primary,
-            backgroundColor: AppColors.white,
-            side: BorderSide(
-              color: isSelected ? AppColors.primary : AppColors.border,
-            ),
-            labelStyle: TextStyle(
-              color: isSelected ? AppColors.white : AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-            showCheckmark: false,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,7 +86,14 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                 style: AppTheme.bodyText,
               ),
               const SizedBox(height: 26),
-              _buildCategoryFilter(),
+              CategoryFilter(
+                selectedCategory: selectedCategory,
+                onChanged: (category) {
+                  setState(() {
+                    selectedCategory = category;
+                  });
+                },
+              ),
               const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
