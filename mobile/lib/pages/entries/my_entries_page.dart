@@ -16,15 +16,24 @@ class MyEntriesPage extends StatefulWidget {
 }
 
 class MyEntriesPageState extends State<MyEntriesPage> {
+  final TextEditingController searchController = TextEditingController();
+
   List<dynamic> entries = [];
   bool isLoading = true;
   String? errorMessage;
   String selectedCategory = 'All';
+  String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     fetchMyEntries();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchMyEntries() async {
@@ -60,15 +69,34 @@ class MyEntriesPageState extends State<MyEntriesPage> {
   }
 
   List<dynamic> get filteredEntries {
-    if (selectedCategory == 'All') return entries;
+    return entries.where((entry) {
+      final category = entry['category']?.toString() ?? '';
+      final menuName = entry['menuName']?.toString().toLowerCase() ?? '';
+      final placeName = entry['placeName']?.toString().toLowerCase() ?? '';
 
-    return entries
-        .where((entry) => entry['category'] == selectedCategory)
-        .toList();
+      final matchesCategory =
+          selectedCategory == 'All' || category == selectedCategory;
+
+      final matchesSearch =
+          menuName.contains(searchQuery) || placeName.contains(searchQuery);
+
+      return matchesCategory && matchesSearch;
+    }).toList();
+  }
+
+  void _clearFilters() {
+    searchController.clear();
+
+    setState(() {
+      searchQuery = '';
+      selectedCategory = 'All';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final results = filteredEntries;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -86,6 +114,8 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                 style: AppTheme.bodyText,
               ),
               const SizedBox(height: 26),
+              _buildSearchBar(),
+              const SizedBox(height: 24),
               CategoryFilter(
                 selectedCategory: selectedCategory,
                 onChanged: (category) {
@@ -99,10 +129,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('My experiences', style: AppTheme.sectionTitle),
-                  Text(
-                    '${filteredEntries.length} entries',
-                    style: AppTheme.caption,
-                  ),
+                  Text('${results.length} entries', style: AppTheme.caption),
                 ],
               ),
               const SizedBox(height: 16),
@@ -128,21 +155,17 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                       'Start saving your favorite culinary experiences here.',
                   buttonText: 'Refresh',
                 )
-              else if (filteredEntries.isEmpty)
+              else if (results.isEmpty)
                 _buildMessage(
                   icon: Icons.search_off_rounded,
                   title: 'No entries found',
                   description:
-                      'You have no ${selectedCategory.toLowerCase()} entries yet.',
-                  buttonText: 'Show all',
-                  onPressed: () {
-                    setState(() {
-                      selectedCategory = 'All';
-                    });
-                  },
+                      'Try another keyword or choose a different category.',
+                  buttonText: 'Clear filters',
+                  onPressed: _clearFilters,
                 )
               else
-                ...filteredEntries.map(
+                ...results.map(
                   (entry) => EntryCard(
                     key: ValueKey(entry['id']),
                     entry: Map<String, dynamic>.from(entry),
@@ -151,6 +174,55 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: TextField(
+        controller: searchController,
+        onChanged: (value) {
+          setState(() {
+            searchQuery = value.trim().toLowerCase();
+          });
+        },
+        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          hintText: 'Search your entries...',
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.primary,
+            size: 22,
+          ),
+          suffixIcon: searchQuery.isNotEmpty
+              ? IconButton(
+                  onPressed: () {
+                    searchController.clear();
+                    setState(() {
+                      searchQuery = '';
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 19,
+                    color: AppColors.textSecondary,
+                  ),
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
     );
