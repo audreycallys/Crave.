@@ -5,7 +5,9 @@ import '../../services/api_service.dart';
 import '../../widgets/entry_card.dart';
 
 class MyEntriesPage extends StatefulWidget {
-  const MyEntriesPage({super.key});
+  final VoidCallback? onEntryChanged;
+
+  const MyEntriesPage({super.key, this.onEntryChanged});
 
   @override
   State<MyEntriesPage> createState() => MyEntriesPageState();
@@ -48,6 +50,11 @@ class MyEntriesPageState extends State<MyEntriesPage> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _handleEntryChanged() async {
+    await fetchMyEntries();
+    widget.onEntryChanged?.call();
   }
 
   List<dynamic> get filteredEntries {
@@ -107,6 +114,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
           onRefresh: fetchMyEntries,
           color: AppColors.primary,
           child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
             children: [
               const Text(
@@ -197,7 +205,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                   (entry) => EntryCard(
                     key: ValueKey(entry['id']),
                     entry: Map<String, dynamic>.from(entry),
-                    onEntryChanged: fetchMyEntries,
+                    onEntryChanged: _handleEntryChanged,
                   ),
                 ),
             ],

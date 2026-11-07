@@ -24,6 +24,28 @@ class ApiService {
     await prefs.remove(_tokenKey);
   }
 
+  static Future<int?> getCurrentUserId() async {
+    try {
+      final token = await getToken();
+
+      if (token == null) return null;
+
+      final parts = token.split('.');
+
+      if (parts.length != 3) return null;
+
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+
+      if (payload is! Map<String, dynamic>) return null;
+
+      return int.tryParse(payload['id'].toString());
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<Map<String, String>> _headers() async {
     final token = await getToken();
 
@@ -98,7 +120,6 @@ class ApiService {
     return _handleResponse(response);
   }
 
-  // Determine image MIME type
   static MediaType _getMediaType(String fileName, String? mimeType) {
     if (mimeType != null && mimeType.startsWith('image/')) {
       return MediaType.parse(mimeType);
@@ -120,7 +141,6 @@ class ApiService {
     }
   }
 
-  // Upload data and photo using multipart/form-data
   static Future<dynamic> postMultipart(
     String endpoint, {
     required Map<String, String> fields,

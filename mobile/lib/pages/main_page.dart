@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
-
+import '../widgets/floating_bottom_nav.dart';
 import 'home/home_page.dart';
 import 'entries/my_entries_page.dart';
 import 'entries/add_entry_page.dart';
-
-import '../widgets/floating_bottom_nav.dart';
+import '../core/theme/app_colors.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -18,22 +16,33 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int selectedIndex = 0;
 
+  final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
+
   final GlobalKey<MyEntriesPageState> _myEntriesKey =
       GlobalKey<MyEntriesPageState>();
 
+  void _refreshHomeEntries() {
+    _homeKey.currentState?.fetchEntries();
+  }
+
+  void _refreshMyEntries() {
+    _myEntriesKey.currentState?.fetchMyEntries();
+  }
+
+  void _refreshAllEntries() {
+    _refreshHomeEntries();
+    _refreshMyEntries();
+  }
+
   late final List<Widget> pages = [
-    const HomePage(),
+    HomePage(key: _homeKey, onEntryChanged: _refreshMyEntries),
     const _PlaceholderPage(
       title: 'Explore',
       description: 'Discover culinary experiences from others.',
       icon: Icons.explore_outlined,
     ),
-    AddEntryPage(
-      onEntryCreated: () {
-        _myEntriesKey.currentState?.fetchMyEntries();
-      },
-    ),
-    MyEntriesPage(key: _myEntriesKey),
+    AddEntryPage(onEntryCreated: _refreshAllEntries),
+    MyEntriesPage(key: _myEntriesKey, onEntryChanged: _refreshHomeEntries),
     const _PlaceholderPage(
       title: 'Profile',
       description: 'Manage your Crave account.',

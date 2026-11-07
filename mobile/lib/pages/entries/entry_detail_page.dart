@@ -15,8 +15,16 @@ class EntryDetailPage extends StatefulWidget {
 
 class _EntryDetailPageState extends State<EntryDetailPage> {
   Map<String, dynamic>? entry;
+  int? currentUserId;
   bool isLoading = true;
+  bool hasChanges = false;
   String? errorMessage;
+
+  bool get isOwner {
+    if (entry == null || currentUserId == null) return false;
+
+    return entry!['userId']?.toString() == currentUserId.toString();
+  }
 
   @override
   void initState() {
@@ -32,11 +40,13 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
     try {
       final response = await ApiService.get('/entries/${widget.entryId}');
+      final userId = await ApiService.getCurrentUserId();
 
       if (!mounted) return;
 
       setState(() {
         entry = Map<String, dynamic>.from(response['data']['entry']);
+        currentUserId = userId;
         isLoading = false;
       });
     } catch (e) {
@@ -50,14 +60,21 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Future<void> editEntry() async {
+    if (!isOwner || entry == null) return;
+
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (context) => AddEntryPage(entry: entry!)),
     );
 
     if (result == true && mounted) {
+      hasChanges = true;
       await fetchDetail();
     }
+  }
+
+  Future<void> handleBack() async {
+    Navigator.pop(context, hasChanges);
   }
 
   String formatPrice(dynamic price) {
@@ -99,16 +116,22 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : errorMessage != null
-            ? _buildError()
-            : entry == null
-            ? _buildError()
-            : _buildContent(),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, hasChanges);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : errorMessage != null
+              ? _buildError()
+              : entry == null
+              ? _buildError()
+              : _buildContent(),
+        ),
       ),
     );
   }
@@ -125,7 +148,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           pinned: true,
           elevation: 0,
           leading: IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: handleBack,
             icon: const Icon(
               Icons.arrow_back_rounded,
               color: AppColors.textPrimary,
@@ -141,16 +164,21 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              onPressed: editEntry,
-              tooltip: 'Edit entry',
-              icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-            ),
-            IconButton(
-              onPressed: deleteEntry,
-              tooltip: 'Delete entry',
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-            ),
+            if (isOwner) ...[
+              IconButton(
+                onPressed: editEntry,
+                tooltip: 'Edit entry',
+                icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+              ),
+              IconButton(
+                onPressed: deleteEntry,
+                tooltip: 'Delete entry',
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                ),
+              ),
+            ],
           ],
         ),
         SliverToBoxAdapter(
@@ -378,10 +406,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               onPressed: fetchDetail,
               child: const Text('Try again'),
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Go back'),
-            ),
+            TextButton(onPressed: handleBack, child: const Text('Go back')),
           ],
         ),
       ),
@@ -389,6 +414,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Future<void> deleteEntry() async {
+    if (!isOwner) return;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {

@@ -5,13 +5,15 @@ import '../../services/api_service.dart';
 import '../../widgets/entry_grid_card.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final VoidCallback? onEntryChanged;
+
+  const HomePage({super.key, this.onEntryChanged});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   List<dynamic> entries = [];
   bool isLoading = true;
   String? errorMessage;
@@ -24,6 +26,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchEntries() async {
+    if (!mounted) return;
+
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -46,6 +50,11 @@ class _HomePageState extends State<HomePage> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _handleEntryChanged() async {
+    await fetchEntries();
+    widget.onEntryChanged?.call();
   }
 
   List<dynamic> get filteredEntries {
@@ -75,21 +84,13 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
             children: [
               _buildHeader(),
-
               const SizedBox(height: 24),
-
               _buildBanner(),
-
               const SizedBox(height: 24),
-
               _buildStatistics(),
-
               const SizedBox(height: 28),
-
               _buildCategorySection(),
-
               const SizedBox(height: 28),
-
               _buildRecentSection(),
             ],
           ),
@@ -365,7 +366,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 16),
-
         if (isLoading)
           const Padding(
             padding: EdgeInsets.only(top: 60),
@@ -414,6 +414,7 @@ class _HomePageState extends State<HomePage> {
             itemBuilder: (context, index) {
               return EntryGridCard(
                 entry: Map<String, dynamic>.from(filteredEntries[index]),
+                onEntryChanged: _handleEntryChanged,
               );
             },
           ),

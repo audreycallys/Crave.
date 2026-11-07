@@ -5,8 +5,9 @@ import '../pages/entries/entry_detail_page.dart';
 
 class EntryGridCard extends StatelessWidget {
   final Map<String, dynamic> entry;
+  final VoidCallback? onEntryChanged;
 
-  const EntryGridCard({super.key, required this.entry});
+  const EntryGridCard({super.key, required this.entry, this.onEntryChanged});
 
   String formatPrice(dynamic price) {
     final amount = double.tryParse(price.toString());
@@ -22,17 +23,23 @@ class EntryGridCard extends StatelessWidget {
     return 'Rp$formatted';
   }
 
-  void openDetail(BuildContext context) {
+  Future<void> openDetail(BuildContext context) async {
     final entryId = entry['id'];
 
     if (entryId == null) return;
 
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => EntryDetailPage(entryId: entryId.toString()),
       ),
     );
+
+    if (!context.mounted) return;
+
+    if (result == true) {
+      onEntryChanged?.call();
+    }
   }
 
   @override
