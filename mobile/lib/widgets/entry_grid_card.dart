@@ -120,15 +120,21 @@ class EntryGridCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    menuName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      height: 1.25,
+                  SizedBox(
+                    height: 38,
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        menuName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          height: 1.25,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),

@@ -286,7 +286,7 @@ class ExplorePageState extends State<ExplorePage> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 14,
-              childAspectRatio: 0.63,
+              childAspectRatio: 0.55,
             ),
             itemBuilder: (context, index) {
               return EntryGridCard(
