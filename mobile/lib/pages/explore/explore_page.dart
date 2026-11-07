@@ -115,8 +115,6 @@ class ExplorePageState extends State<ExplorePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Find your next favorite.', style: AppTheme.pageSubtitle),
-        const SizedBox(height: 4),
         const Text('Explore', style: AppTheme.pageTitle),
         const SizedBox(height: 8),
         const Text(
