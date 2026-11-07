@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class AddEntryPage extends StatefulWidget {
   final VoidCallback? onEntryCreated;
+  final VoidCallback? onClose;
   final Map<String, dynamic>? entry;
 
-  const AddEntryPage({super.key, this.onEntryCreated, this.entry});
+  const AddEntryPage({
+    super.key,
+    this.onEntryCreated,
+    this.onClose,
+    this.entry,
+  });
 
   @override
   State<AddEntryPage> createState() => _AddEntryPageState();
@@ -71,6 +78,16 @@ class _AddEntryPageState extends State<AddEntryPage> {
     super.dispose();
   }
 
+  void handleClose() {
+    if (isLoading) return;
+
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
   Future<void> pickPhoto() async {
     try {
       final photo = await imagePicker.pickImage(
@@ -78,7 +95,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
         imageQuality: 80,
       );
 
-      if (photo == null) return;
+      if (photo == null || !mounted) return;
 
       setState(() {
         selectedPhoto = photo;
@@ -112,7 +129,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
       },
     );
 
-    if (pickedDate != null) {
+    if (pickedDate != null && mounted) {
       setState(() {
         selectedDate = pickedDate;
       });
@@ -320,7 +337,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
         ),
         SizedBox(height: 12),
         Text(
-          'Add your food photo',
+          'Add a photo of your experience',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -513,27 +530,41 @@ class _AddEntryPageState extends State<AddEntryPage> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 130),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
           children: [
-            Text(
-              isEditMode ? 'Edit Entry' : 'Add Entry',
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isEditMode ? 'Edit Entry' : 'Add Entry',
+                        style: AppTheme.pageTitle,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isEditMode
+                            ? 'Update the details of your experience.'
+                            : 'Save a little moment from your food journey.',
+                        style: AppTheme.bodyText,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: isLoading ? null : handleClose,
+                  tooltip: 'Close',
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 5),
-            Text(
-              isEditMode
-                  ? 'Update your culinary experience.'
-                  : 'Capture a new culinary experience.',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 26),
             Form(
               key: _formKey,
               child: Column(

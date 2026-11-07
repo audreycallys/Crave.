@@ -114,6 +114,32 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
   }
 
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+    Color iconColor = AppColors.primary,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          backgroundColor: AppColors.white,
+          foregroundColor: iconColor,
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          fixedSize: const Size(40, 40),
+          padding: EdgeInsets.zero,
+        ),
+        icon: Icon(icon, color: iconColor, size: 20),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -140,111 +166,103 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     final photoUrl = entry!['photoUrl']?.toString() ?? '';
     final category = entry!['category']?.toString() ?? 'Food';
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          backgroundColor: AppColors.background,
-          surfaceTintColor: Colors.transparent,
-          pinned: true,
-          elevation: 0,
-          leading: IconButton(
-            onPressed: handleBack,
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              color: AppColors.textPrimary,
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: handleBack,
+              tooltip: 'Back',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          title: const Text(
-            'Experience Details',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+            const Expanded(
+              child: Text(
+                'Experience Details',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
-          ),
-          centerTitle: true,
-          actions: [
             if (isOwner) ...[
-              IconButton(
+              _buildActionButton(
+                icon: Icons.edit_outlined,
                 onPressed: editEntry,
                 tooltip: 'Edit entry',
-                icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
               ),
-              IconButton(
+              _buildActionButton(
+                icon: Icons.delete_outline_rounded,
                 onPressed: deleteEntry,
                 tooltip: 'Delete entry',
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
-                ),
+                iconColor: Colors.red,
               ),
-            ],
+            ] else
+              const SizedBox(width: 40),
           ],
         ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: photoUrl.isNotEmpty
-                        ? Image.network(
-                            photoUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return _imagePlaceholder();
-                            },
-                          )
-                        : _imagePlaceholder(),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildCategoryAndRating(category),
-                const SizedBox(height: 14),
-                Text(
-                  entry!['menuName']?.toString() ?? 'Untitled',
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                _buildInformation(),
-                const SizedBox(height: 26),
-                const Text(
-                  'My Notes',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Text(
-                    entry!['notes']?.toString().isNotEmpty == true
-                        ? entry!['notes'].toString()
-                        : 'No notes added for this experience.',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      height: 1.7,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
+        const SizedBox(height: 20),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: photoUrl.isNotEmpty
+                ? Image.network(
+                    photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _imagePlaceholder();
+                    },
+                  )
+                : _imagePlaceholder(),
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildCategoryAndRating(category),
+        const SizedBox(height: 14),
+        Text(
+          entry!['menuName']?.toString() ?? 'Untitled',
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 22),
+        _buildInformation(),
+        const SizedBox(height: 26),
+        const Text(
+          'My Notes',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Text(
+            entry!['notes']?.toString().isNotEmpty == true
+                ? entry!['notes'].toString()
+                : 'No notes added for this experience.',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.7,
+              color: AppColors.textPrimary,
             ),
           ),
         ),
@@ -294,7 +312,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -331,10 +349,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   Widget _infoRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: AppColors.primary, size: 19),
         const SizedBox(width: 12),
-        Expanded(
+        SizedBox(
+          width: 76,
           child: Text(
             label,
             style: const TextStyle(
@@ -343,10 +363,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             ),
           ),
         ),
-        Flexible(
+        const SizedBox(width: 12),
+        Expanded(
           child: Text(
             value,
             textAlign: TextAlign.end,
+            softWrap: true,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,

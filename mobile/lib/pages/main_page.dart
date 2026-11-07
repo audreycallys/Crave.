@@ -66,6 +66,12 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void _closeAddEntry() {
+    setState(() {
+      selectedIndex = 0;
+    });
+  }
+
   late final List<Widget> pages = [
     HomePage(
       key: _homeKey,
@@ -74,7 +80,7 @@ class _MainPageState extends State<MainPage> {
       onExploreTap: _openExplore,
     ),
     ExplorePage(key: _exploreKey),
-    AddEntryPage(onEntryCreated: _refreshAllEntries),
+    AddEntryPage(onEntryCreated: _refreshAllEntries, onClose: _closeAddEntry),
     MyEntriesPage(key: _myEntriesKey, onEntryChanged: _refreshHomeEntries),
     const ProfilePage(),
   ];
