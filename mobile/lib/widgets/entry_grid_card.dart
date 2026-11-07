@@ -14,13 +14,36 @@ class EntryGridCard extends StatelessWidget {
 
     if (amount == null) return price.toString();
 
-    final number = amount.toStringAsFixed(0);
-    final formatted = number.replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => '.',
-    );
+    final formatted = amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.');
 
     return 'Rp$formatted';
+  }
+
+  String formatDate(dynamic date) {
+    if (date == null || date.toString().isEmpty) return '';
+
+    final parsedDate = DateTime.tryParse(date.toString());
+
+    if (parsedDate == null) return date.toString();
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
   }
 
   Future<void> openDetail(BuildContext context) async {
@@ -46,6 +69,10 @@ class EntryGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final photoUrl = entry['photoUrl']?.toString() ?? '';
     final category = entry['category']?.toString() ?? 'Food';
+    final menuName = entry['menuName']?.toString() ?? 'Untitled';
+    final placeName = entry['placeName']?.toString() ?? '';
+    final date = formatDate(entry['dateTried']);
+    final rating = entry['rating'] ?? 0;
 
     return GestureDetector(
       onTap: () => openDetail(context),
@@ -61,78 +88,70 @@ class EntryGridCard extends StatelessWidget {
           children: [
             AspectRatio(
               aspectRatio: 1,
-              child: photoUrl.isNotEmpty
-                  ? Image.network(
-                      photoUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _placeholder();
-                      },
-                    )
-                  : _placeholder(),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildImage(photoUrl),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: _imageBadge(
+                      icon: category == 'Drink'
+                          ? Icons.local_cafe_rounded
+                          : Icons.restaurant_rounded,
+                      label: category,
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: _imageBadge(
+                      icon: Icons.star_rounded,
+                      label: '$rating/5',
+                      iconColor: const Color(0xFFD6A928),
+                      textColor: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        letterSpacing: 0.6,
-                      ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    menuName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      height: 1.25,
                     ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (placeName.isNotEmpty)
+                    _detailItem(Icons.location_on_outlined, placeName),
+                  if (date.isNotEmpty) ...[
                     const SizedBox(height: 6),
-                    Text(
-                      entry['menuName']?.toString() ?? 'Untitled',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        height: 1.25,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 15,
-                          color: Color(0xFFD6A928),
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${entry['rating'] ?? 0}/5',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const Spacer(),
-                        Flexible(
-                          child: Text(
-                            formatPrice(entry['price'] ?? 0),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _detailItem(Icons.calendar_today_rounded, date),
                   ],
-                ),
+                  const SizedBox(height: 12),
+                  const Divider(color: AppColors.border, height: 1),
+                  const SizedBox(height: 10),
+                  Text(
+                    formatPrice(entry['price'] ?? 0),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -141,7 +160,69 @@ class EntryGridCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
+  Widget _buildImage(String photoUrl) {
+    if (photoUrl.isEmpty) return _imagePlaceholder();
+
+    return Image.network(
+      photoUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _imagePlaceholder();
+      },
+    );
+  }
+
+  Widget _imageBadge({
+    required IconData icon,
+    required String label,
+    Color iconColor = AppColors.primary,
+    Color textColor = AppColors.primary,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: iconColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailItem(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: AppColors.textSecondary),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _imagePlaceholder() {
     return Container(
       color: AppColors.primarySoft,
       child: const Center(

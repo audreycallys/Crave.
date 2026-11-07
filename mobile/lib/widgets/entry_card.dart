@@ -14,11 +14,9 @@ class EntryCard extends StatelessWidget {
 
     if (amount == null) return price.toString();
 
-    final number = amount.toStringAsFixed(0);
-    final formatted = number.replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => '.',
-    );
+    final formatted = amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.');
 
     return 'Rp$formatted';
   }
@@ -79,18 +77,11 @@ class EntryCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => openDetail(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.035),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -101,88 +92,32 @@ class EntryCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  photoUrl.isNotEmpty
-                      ? Image.network(
-                          photoUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _imagePlaceholder();
-                          },
-                        )
-                      : _imagePlaceholder(),
+                  _buildImage(photoUrl),
                   Positioned(
-                    top: 14,
-                    left: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            category == 'Drink'
-                                ? Icons.local_cafe_rounded
-                                : Icons.restaurant_rounded,
-                            size: 14,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            category,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
+                    top: 12,
+                    left: 12,
+                    child: _imageBadge(
+                      icon: category == 'Drink'
+                          ? Icons.local_cafe_rounded
+                          : Icons.restaurant_rounded,
+                      label: category,
                     ),
                   ),
                   Positioned(
-                    top: 14,
-                    right: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Color(0xFFD6A928),
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$rating/5',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
+                    top: 12,
+                    right: 12,
+                    child: _imageBadge(
+                      icon: Icons.star_rounded,
+                      label: '$rating/5',
+                      iconColor: const Color(0xFFD6A928),
+                      textColor: AppColors.textPrimary,
                     ),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(17),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -191,86 +126,29 @@ class EntryCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
+                      height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 9),
+                  const SizedBox(height: 10),
                   if (placeName.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            placeName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _detailItem(Icons.location_on_outlined, placeName),
                   if (date.isNotEmpty) ...[
-                    const SizedBox(height: 7),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today_rounded,
-                          size: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          date,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 6),
+                    _detailItem(Icons.calendar_today_rounded, date),
                   ],
-                  const SizedBox(height: 16),
-                  const Divider(color: AppColors.border, height: 1),
                   const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(
-                            Icons.auto_stories_rounded,
-                            size: 15,
-                            color: AppColors.primary,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Food experience',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        formatPrice(entry['price'] ?? 0),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
+                  const Divider(color: AppColors.border, height: 1),
+                  const SizedBox(height: 12),
+                  Text(
+                    formatPrice(entry['price'] ?? 0),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ],
               ),
@@ -281,13 +159,75 @@ class EntryCard extends StatelessWidget {
     );
   }
 
+  Widget _buildImage(String photoUrl) {
+    if (photoUrl.isEmpty) return _imagePlaceholder();
+
+    return Image.network(
+      photoUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _imagePlaceholder();
+      },
+    );
+  }
+
+  Widget _imageBadge({
+    required IconData icon,
+    required String label,
+    Color iconColor = AppColors.primary,
+    Color textColor = AppColors.primary,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailItem(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: AppColors.textSecondary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _imagePlaceholder() {
     return Container(
       color: AppColors.primarySoft,
       child: const Center(
         child: Icon(
           Icons.restaurant_rounded,
-          size: 45,
+          size: 42,
           color: AppColors.primary,
         ),
       ),
