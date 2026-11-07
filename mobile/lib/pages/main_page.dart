@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
 import '../widgets/floating_bottom_nav.dart';
 import 'home/home_page.dart';
+import 'explore/explore_page.dart';
 import 'entries/my_entries_page.dart';
 import 'entries/add_entry_page.dart';
 import 'profile/profile_page.dart';
@@ -22,6 +22,8 @@ class _MainPageState extends State<MainPage> {
   final GlobalKey<MyEntriesPageState> _myEntriesKey =
       GlobalKey<MyEntriesPageState>();
 
+  final GlobalKey<ExplorePageState> _exploreKey = GlobalKey<ExplorePageState>();
+
   void _refreshHomeEntries() {
     _homeKey.currentState?.fetchEntries();
   }
@@ -30,18 +32,19 @@ class _MainPageState extends State<MainPage> {
     _myEntriesKey.currentState?.fetchMyEntries();
   }
 
+  void _refreshExploreEntries() {
+    _exploreKey.currentState?.fetchEntries();
+  }
+
   void _refreshAllEntries() {
     _refreshHomeEntries();
     _refreshMyEntries();
+    _refreshExploreEntries();
   }
 
   late final List<Widget> pages = [
     HomePage(key: _homeKey, onEntryChanged: _refreshMyEntries),
-    const _PlaceholderPage(
-      title: 'Explore',
-      description: 'Discover culinary experiences from others.',
-      icon: Icons.explore_outlined,
-    ),
+    ExplorePage(key: _exploreKey),
     AddEntryPage(onEntryCreated: _refreshAllEntries),
     MyEntriesPage(key: _myEntriesKey, onEntryChanged: _refreshHomeEntries),
     const ProfilePage(),
@@ -59,51 +62,6 @@ class _MainPageState extends State<MainPage> {
             selectedIndex = index;
           });
         },
-      ),
-    );
-  }
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-
-  const _PlaceholderPage({
-    required this.title,
-    required this.description,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 60, color: AppColors.primary),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
