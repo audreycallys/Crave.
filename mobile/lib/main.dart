@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
 import 'pages/splash_page.dart';
-import 'pages/home/home_page.dart';
 import 'services/api_service.dart';
 import 'pages/main_page.dart';
 

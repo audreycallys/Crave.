@@ -1,16 +1,22 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/entry_grid_card.dart';
+import '../../widgets/food_diary_calendar.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback? onEntryChanged;
+  final VoidCallback? onProfileTap;
+  final VoidCallback? onExploreTap;
 
-  const HomePage({super.key, this.onEntryChanged});
+  const HomePage({
+    super.key,
+    this.onEntryChanged,
+    this.onProfileTap,
+    this.onExploreTap,
+  });
 
   @override
   State<HomePage> createState() => HomePageState();
@@ -21,41 +27,11 @@ class HomePageState extends State<HomePage> {
   bool isLoading = true;
   String? errorMessage;
   String selectedCategory = 'All';
-  String greetingName = 'foodies';
 
   @override
   void initState() {
     super.initState();
     fetchEntries();
-    fetchUserName();
-  }
-
-  Future<void> fetchUserName() async {
-    try {
-      final token = await ApiService.getToken();
-
-      if (token == null || token.isEmpty) return;
-
-      final parts = token.split('.');
-
-      if (parts.length != 3) return;
-
-      final payload = jsonDecode(
-        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
-      );
-
-      if (payload is Map && payload['name'] != null) {
-        final fullName = payload['name'].toString().trim();
-
-        if (fullName.isNotEmpty && mounted) {
-          setState(() {
-            greetingName = fullName.split(RegExp(r'\s+')).first;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('Failed to load user name: $e');
-    }
   }
 
   Future<void> fetchEntries() async {
@@ -117,9 +93,11 @@ class HomePageState extends State<HomePage> {
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
             children: [
               _buildHeader(),
-              const SizedBox(height: 24),
-              _buildBanner(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
+              _buildIntro(),
+              const SizedBox(height: 20),
+              const FoodDiaryCalendar(),
+              const SizedBox(height: 28),
               _buildStatistics(),
               const SizedBox(height: 28),
               _buildCategorySection(),
@@ -136,41 +114,41 @@ class HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good day, $greetingName!',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
+        Row(
+          children: [
+            const Icon(
+              Icons.restaurant_rounded,
+              color: AppColors.primary,
+              size: 27,
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'crave.',
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+                letterSpacing: -0.8,
               ),
-              const SizedBox(height: 5),
-              Text('Discover', style: AppTheme.pageTitle),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
         Container(
-          width: 38,
-          height: 38,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
           child: IconButton(
+            onPressed: widget.onProfileTap,
+            tooltip: 'Profile',
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            tooltip: 'Refresh',
-            onPressed: isLoading ? null : fetchEntries,
             icon: const Icon(
-              Icons.refresh_rounded,
+              Icons.person_outline_rounded,
               color: AppColors.primary,
-              size: 20,
+              size: 22,
             ),
           ),
         ),
@@ -178,73 +156,17 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildBanner() {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4F46B5), Color(0xFF7770C9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('What are you craving?', style: AppTheme.pageTitle),
+        const SizedBox(height: 8),
+        const Text(
+          'Discover new flavors and memorable experiences.',
+          style: AppTheme.bodyText,
         ),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'YOUR CULINARY JOURNAL',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Every flavor\nhas a story.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 27,
-              height: 1.2,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Discover new tastes and explore little moments shared by others.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Row(
-            children: [
-              Icon(Icons.restaurant_rounded, color: AppColors.accent, size: 19),
-              SizedBox(width: 8),
-              Text(
-                'Explore. Taste. Remember.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -368,7 +290,22 @@ class HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('Recent experiences', style: AppTheme.sectionTitle),
-            Text('${filteredEntries.length} posts', style: AppTheme.caption),
+            TextButton(
+              onPressed: widget.onExploreTap,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'See all',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
