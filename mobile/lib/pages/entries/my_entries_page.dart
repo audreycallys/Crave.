@@ -15,7 +15,6 @@ class MyEntriesPageState extends State<MyEntriesPage> {
   List<dynamic> entries = [];
   bool isLoading = true;
   String? errorMessage;
-
   String selectedCategory = 'All';
 
   @override
@@ -24,12 +23,13 @@ class MyEntriesPageState extends State<MyEntriesPage> {
     fetchMyEntries();
   }
 
-  // Fetch all entries belonging to the logged-in user
   Future<void> fetchMyEntries() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+    }
 
     try {
       final response = await ApiService.get('/entries/my');
@@ -50,18 +50,14 @@ class MyEntriesPageState extends State<MyEntriesPage> {
     }
   }
 
-  // Filter entries based on selected category
   List<dynamic> get filteredEntries {
-    if (selectedCategory == 'All') {
-      return entries;
-    }
+    if (selectedCategory == 'All') return entries;
 
-    return entries.where((entry) {
-      return entry['category'] == selectedCategory;
-    }).toList();
+    return entries
+        .where((entry) => entry['category'] == selectedCategory)
+        .toList();
   }
 
-  // Category filter widget
   Widget _buildCategoryFilter() {
     final categories = ['All', 'Food', 'Drink'];
 
@@ -121,20 +117,14 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                   color: AppColors.textPrimary,
                 ),
               ),
-
               const SizedBox(height: 5),
-
               const Text(
                 'Every bite, saved in your story.',
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
-
               const SizedBox(height: 28),
-
               _buildCategoryFilter(),
-
               const SizedBox(height: 24),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -168,9 +158,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 16),
-
               if (isLoading)
                 const Padding(
                   padding: EdgeInsets.only(top: 100),
@@ -206,7 +194,11 @@ class MyEntriesPageState extends State<MyEntriesPage> {
                 )
               else
                 ...filteredEntries.map(
-                  (entry) => EntryCard(entry: Map<String, dynamic>.from(entry)),
+                  (entry) => EntryCard(
+                    key: ValueKey(entry['id']),
+                    entry: Map<String, dynamic>.from(entry),
+                    onEntryChanged: fetchMyEntries,
+                  ),
                 ),
             ],
           ),
@@ -227,9 +219,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
       child: Column(
         children: [
           Icon(icon, size: 55, color: AppColors.primary),
-
           const SizedBox(height: 18),
-
           Text(
             title,
             textAlign: TextAlign.center,
@@ -239,9 +229,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
               color: AppColors.textPrimary,
             ),
           ),
-
           const SizedBox(height: 8),
-
           Text(
             description,
             textAlign: TextAlign.center,
@@ -251,9 +239,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
               color: AppColors.textSecondary,
             ),
           ),
-
           const SizedBox(height: 20),
-
           OutlinedButton(
             onPressed: onPressed ?? fetchMyEntries,
             child: Text(buttonText),

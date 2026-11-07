@@ -5,8 +5,9 @@ import '../pages/entries/entry_detail_page.dart';
 
 class EntryCard extends StatelessWidget {
   final Map<String, dynamic> entry;
+  final VoidCallback? onEntryChanged;
 
-  const EntryCard({super.key, required this.entry});
+  const EntryCard({super.key, required this.entry, this.onEntryChanged});
 
   String formatPrice(dynamic price) {
     final amount = double.tryParse(price.toString());
@@ -47,17 +48,23 @@ class EntryCard extends StatelessWidget {
     return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
   }
 
-  void openDetail(BuildContext context) {
+  Future<void> openDetail(BuildContext context) async {
     final entryId = entry['id'];
 
     if (entryId == null) return;
 
-    Navigator.push(
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => EntryDetailPage(entryId: entryId.toString()),
       ),
     );
+
+    if (!context.mounted) return;
+
+    if (result == true) {
+      onEntryChanged?.call();
+    }
   }
 
   @override
@@ -89,7 +96,6 @@ class EntryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Food photo
             AspectRatio(
               aspectRatio: 16 / 10,
               child: Stack(
@@ -104,7 +110,6 @@ class EntryCard extends StatelessWidget {
                           },
                         )
                       : _imagePlaceholder(),
-
                   Positioned(
                     top: 14,
                     left: 14,
@@ -140,7 +145,6 @@ class EntryCard extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   Positioned(
                     top: 14,
                     right: 14,
@@ -177,8 +181,6 @@ class EntryCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Entry information
             Padding(
               padding: const EdgeInsets.all(17),
               child: Column(
@@ -194,9 +196,7 @@ class EntryCard extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 9),
-
                   if (placeName.isNotEmpty)
                     Row(
                       children: [
@@ -219,7 +219,6 @@ class EntryCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
                   if (date.isNotEmpty) ...[
                     const SizedBox(height: 7),
                     Row(
@@ -240,11 +239,9 @@ class EntryCard extends StatelessWidget {
                       ],
                     ),
                   ],
-
                   const SizedBox(height: 16),
                   const Divider(color: AppColors.border, height: 1),
                   const SizedBox(height: 14),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
