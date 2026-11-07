@@ -1,0 +1,484 @@
+import 'package:flutter/material.dart';
+
+import '../../core/theme/app_colors.dart';
+import '../../services/api_service.dart';
+import 'add_entry_page.dart';
+
+class EntryDetailPage extends StatefulWidget {
+  final String entryId;
+
+  const EntryDetailPage({super.key, required this.entryId});
+
+  @override
+  State<EntryDetailPage> createState() => _EntryDetailPageState();
+}
+
+class _EntryDetailPageState extends State<EntryDetailPage> {
+  Map<String, dynamic>? entry;
+  int? currentUserId;
+  bool isLoading = true;
+  bool hasChanges = false;
+  String? errorMessage;
+
+  bool get isOwner {
+    if (entry == null || currentUserId == null) return false;
+
+    return entry!['userId']?.toString() == currentUserId.toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDetail();
+  }
+
+  Future<void> fetchDetail() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final response = await ApiService.get('/entries/${widget.entryId}');
+      final userId = await ApiService.getCurrentUserId();
+
+      if (!mounted) return;
+
+      setState(() {
+        entry = Map<String, dynamic>.from(response['data']['entry']);
+        currentUserId = userId;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> editEntry() async {
+    if (!isOwner || entry == null) return;
+
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => AddEntryPage(entry: entry!)),
+    );
+
+    if (result == true && mounted) {
+      hasChanges = true;
+      await fetchDetail();
+    }
+  }
+
+  Future<void> handleBack() async {
+    Navigator.pop(context, hasChanges);
+  }
+
+  String formatPrice(dynamic price) {
+    final amount = double.tryParse(price.toString());
+
+    if (amount == null) return price.toString();
+
+    final formatted = amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.');
+
+    return 'Rp$formatted';
+  }
+
+  String formatDate(dynamic date) {
+    if (date == null) return '-';
+
+    final parsedDate = DateTime.tryParse(date.toString());
+
+    if (parsedDate == null) return date.toString();
+
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+    Color iconColor = AppColors.primary,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          backgroundColor: AppColors.white,
+          foregroundColor: iconColor,
+          side: const BorderSide(color: AppColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          fixedSize: const Size(40, 40),
+          padding: EdgeInsets.zero,
+        ),
+        icon: Icon(icon, color: iconColor, size: 20),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, hasChanges);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : errorMessage != null
+              ? _buildError()
+              : entry == null
+              ? _buildError()
+              : _buildContent(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    final photoUrl = entry!['photoUrl']?.toString() ?? '';
+    final category = entry!['category']?.toString() ?? 'Food';
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: handleBack,
+              tooltip: 'Back',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                'Experience Details',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            if (isOwner) ...[
+              _buildActionButton(
+                icon: Icons.edit_outlined,
+                onPressed: editEntry,
+                tooltip: 'Edit entry',
+              ),
+              _buildActionButton(
+                icon: Icons.delete_outline_rounded,
+                onPressed: deleteEntry,
+                tooltip: 'Delete entry',
+                iconColor: Colors.red,
+              ),
+            ] else
+              const SizedBox(width: 40),
+          ],
+        ),
+        const SizedBox(height: 20),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: photoUrl.isNotEmpty
+                ? Image.network(
+                    photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _imagePlaceholder();
+                    },
+                  )
+                : _imagePlaceholder(),
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildCategoryAndRating(category),
+        const SizedBox(height: 14),
+        Text(
+          entry!['menuName']?.toString() ?? 'Untitled',
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 22),
+        _buildInformation(),
+        const SizedBox(height: 26),
+        const Text(
+          'My Notes',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Text(
+            entry!['notes']?.toString().isNotEmpty == true
+                ? entry!['notes'].toString()
+                : 'No notes added for this experience.',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.7,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryAndRating(String category) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            category,
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            const Icon(Icons.star_rounded, color: Color(0xFFD6A928), size: 20),
+            const SizedBox(width: 5),
+            Text(
+              '${entry!['rating'] ?? 0}/5',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInformation() {
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _infoRow(
+            Icons.location_on_outlined,
+            'Place',
+            entry!['placeName']?.toString().isNotEmpty == true
+                ? entry!['placeName'].toString()
+                : '-',
+          ),
+          const Divider(height: 24, color: AppColors.border),
+          _infoRow(
+            Icons.calendar_today_outlined,
+            'Date tried',
+            formatDate(entry!['dateTried']),
+          ),
+          const Divider(height: 24, color: AppColors.border),
+          _infoRow(
+            Icons.payments_outlined,
+            'Price',
+            formatPrice(entry!['price'] ?? 0),
+          ),
+          const Divider(height: 24, color: AppColors.border),
+          _infoRow(
+            Icons.public_rounded,
+            'Visibility',
+            entry!['isPublic'] == true ? 'Public' : 'Private',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 19),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 76,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _imagePlaceholder() {
+    return Container(
+      color: AppColors.primarySoft,
+      child: const Center(
+        child: Icon(
+          Icons.restaurant_rounded,
+          size: 55,
+          color: AppColors.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 50,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 15),
+            const Text(
+              'Unable to load experience',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMessage ?? 'Experience not found.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: fetchDetail,
+              child: const Text('Try again'),
+            ),
+            TextButton(onPressed: handleBack, child: const Text('Go back')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> deleteEntry() async {
+    if (!isOwner) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Entry?'),
+          content: const Text(
+            'Are you sure you want to delete this entry? '
+            'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      await ApiService.delete('/entries/${widget.entryId}');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entry deleted successfully')),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete entry: $e')));
+    }
+  }
+}
