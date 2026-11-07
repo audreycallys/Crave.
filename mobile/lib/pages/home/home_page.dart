@@ -349,9 +349,11 @@ class HomePageState extends State<HomePage> {
     required String buttonText,
     required VoidCallback onPressed,
   }) {
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.only(top: 35, bottom: 25),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, size: 48, color: AppColors.primary),
           const SizedBox(height: 16),
