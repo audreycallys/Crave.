@@ -98,11 +98,11 @@ class ExplorePageState extends State<ExplorePage> {
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
             children: [
               _buildHeader(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
               _buildSearchBar(),
-              const SizedBox(height: 26),
+              const SizedBox(height: 28),
               _buildCategorySection(),
-              const SizedBox(height: 26),
+              const SizedBox(height: 28),
               _buildResultsSection(),
             ],
           ),
@@ -118,7 +118,7 @@ class ExplorePageState extends State<ExplorePage> {
         const Text('Explore', style: AppTheme.pageTitle),
         const SizedBox(height: 8),
         const Text(
-          'Discover food and drinks shared by the Crave community.',
+          'Discover new flavors shared by the Crave community.',
           style: AppTheme.bodyText,
         ),
       ],
@@ -175,13 +175,13 @@ class ExplorePageState extends State<ExplorePage> {
   }
 
   Widget _buildCategorySection() {
-    final categories = ['All', 'Food', 'Drink'];
+    const categories = ['All', 'Food', 'Drink'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Categories', style: AppTheme.sectionTitle),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
         Text(
           '${entries.length} experiences · $foodCount food · $drinkCount drinks',
           style: AppTheme.caption,

@@ -74,31 +74,28 @@ class MyEntriesPageState extends State<MyEntriesPage> {
         final isSelected = selectedCategory == category;
 
         return Padding(
-          padding: const EdgeInsets.only(right: 10),
-          child: GestureDetector(
-            onTap: () {
+          padding: const EdgeInsets.only(right: 9),
+          child: ChoiceChip(
+            label: Text(category),
+            selected: isSelected,
+            onSelected: (_) {
               setState(() {
                 selectedCategory = category;
               });
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.border,
-                ),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.white : AppColors.textSecondary,
-                ),
-              ),
+            selectedColor: AppColors.primary,
+            backgroundColor: AppColors.white,
+            side: BorderSide(
+              color: isSelected ? AppColors.primary : AppColors.border,
+            ),
+            labelStyle: TextStyle(
+              color: isSelected ? AppColors.white : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+            showCheckmark: false,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
         );
@@ -119,47 +116,28 @@ class MyEntriesPageState extends State<MyEntriesPage> {
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
             children: [
               const Text('My Journal', style: AppTheme.pageTitle),
-              const SizedBox(height: 5),
+              const SizedBox(height: 8),
               const Text(
                 'Every bite, saved in your story.',
-                style: AppTheme.pageSubtitle,
+                style: AppTheme.bodyText,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 26),
               _buildCategoryFilter(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('My experiences', style: AppTheme.sectionTitle),
-                  Row(
-                    children: [
-                      Text(
-                        '${filteredEntries.length} entries',
-                        style: AppTheme.caption,
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 38,
-                        height: 38,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Refresh entries',
-                          onPressed: isLoading ? null : fetchMyEntries,
-                          icon: const Icon(
-                            Icons.refresh_rounded,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '${filteredEntries.length} entries',
+                    style: AppTheme.caption,
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               if (isLoading)
                 const Padding(
-                  padding: EdgeInsets.only(top: 100),
+                  padding: EdgeInsets.only(top: 60),
                   child: Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
                   ),
@@ -215,11 +193,11 @@ class MyEntriesPageState extends State<MyEntriesPage> {
     VoidCallback? onPressed,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(top: 70),
+      padding: const EdgeInsets.only(top: 35, bottom: 25),
       child: Column(
         children: [
-          Icon(icon, size: 55, color: AppColors.primary),
-          const SizedBox(height: 18),
+          Icon(icon, size: 48, color: AppColors.primary),
+          const SizedBox(height: 16),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -231,7 +209,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
             textAlign: TextAlign.center,
             style: AppTheme.bodyText,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           OutlinedButton(
             onPressed: onPressed ?? fetchMyEntries,
             child: Text(buttonText),
