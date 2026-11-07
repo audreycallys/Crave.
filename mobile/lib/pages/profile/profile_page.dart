@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../auth/login_page.dart';
 
@@ -72,7 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final name = user['name']?.toString() ?? 'User';
     final words = name.trim().split(RegExp(r'\s+'));
 
-    if (words.length > 1) {
+    if (words.length > 1 && words[0].isNotEmpty && words[1].isNotEmpty) {
       return '${words[0][0]}${words[1][0]}'.toUpperCase();
     }
 
@@ -97,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           content: const Text(
             'Are you sure you want to log out of your Crave account?',
-            style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+            style: AppTheme.bodyText,
           ),
           actions: [
             TextButton(
@@ -155,11 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTheme.caption.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -209,13 +206,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text(title, style: AppTheme.caption),
                 const SizedBox(height: 4),
                 Text(
                   value,
@@ -252,17 +243,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
                   children: [
-                    const Text(
-                      'My Profile',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-
+                    const Text('My Profile', style: AppTheme.pageTitle),
                     const SizedBox(height: 30),
-
                     Center(
                       child: Column(
                         children: [
@@ -315,60 +297,31 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 18),
-
                           Text(
                             name,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 21,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             ),
                           ),
-
                           const SizedBox(height: 6),
-
-                          Text(
-                            email,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+                          Text(email, style: AppTheme.pageSubtitle),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 38),
-
-                    const Text(
-                      'Your Activity',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-
+                    const Text('Your Activity', style: AppTheme.sectionTitle),
                     const SizedBox(height: 14),
-
                     buildActivityCard(),
-
                     const SizedBox(height: 28),
-
                     const Text(
                       'Account Information',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTheme.sectionTitle,
                     ),
-
                     const SizedBox(height: 12),
-
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -395,9 +348,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 28),
-
                     SizedBox(
                       height: 54,
                       child: OutlinedButton.icon(

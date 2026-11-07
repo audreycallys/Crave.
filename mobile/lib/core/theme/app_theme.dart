@@ -8,18 +8,41 @@ class AppTheme {
 
   static const double pageTitleSize = 28;
   static const double sectionTitleSize = 17;
+  static const double pageSubtitleSize = 13;
+  static const double bodyTextSize = 13;
+  static const double captionSize = 11;
 
-  static TextStyle get pageTitle => const TextStyle(
+  static const TextStyle pageTitle = TextStyle(
     fontSize: pageTitleSize,
     fontWeight: FontWeight.w800,
     color: AppColors.textPrimary,
     letterSpacing: -0.7,
   );
 
-  static TextStyle get sectionTitle => const TextStyle(
+  static const TextStyle sectionTitle = TextStyle(
     fontSize: sectionTitleSize,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
+  );
+
+  static const TextStyle pageSubtitle = TextStyle(
+    fontSize: pageSubtitleSize,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+    height: 1.5,
+  );
+
+  static const TextStyle bodyText = TextStyle(
+    fontSize: bodyTextSize,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+    height: 1.5,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontSize: captionSize,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
   );
 
   static ThemeData get lightTheme {
@@ -36,7 +59,7 @@ class AppTheme {
       ),
       textTheme: textTheme.copyWith(
         headlineLarge: textTheme.headlineLarge?.copyWith(
-          fontSize: 28,
+          fontSize: pageTitleSize,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
           letterSpacing: -0.7,
@@ -47,7 +70,7 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
         titleMedium: textTheme.titleMedium?.copyWith(
-          fontSize: 17,
+          fontSize: sectionTitleSize,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
@@ -56,11 +79,12 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
         bodyMedium: textTheme.bodyMedium?.copyWith(
-          fontSize: 13,
+          fontSize: bodyTextSize,
           color: AppColors.textSecondary,
+          height: 1.5,
         ),
         bodySmall: textTheme.bodySmall?.copyWith(
-          fontSize: 11,
+          fontSize: captionSize,
           color: AppColors.textSecondary,
         ),
       ),

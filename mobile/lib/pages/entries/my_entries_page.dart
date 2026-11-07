@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/entry_card.dart';
 
@@ -93,7 +94,7 @@ class MyEntriesPageState extends State<MyEntriesPage> {
               child: Text(
                 category,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: isSelected ? AppColors.white : AppColors.textSecondary,
                 ),
@@ -115,20 +116,13 @@ class MyEntriesPageState extends State<MyEntriesPage> {
           color: AppColors.primary,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
             children: [
-              const Text(
-                'My Journal',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              const Text('My Journal', style: AppTheme.pageTitle),
               const SizedBox(height: 5),
               const Text(
                 'Every bite, saved in your story.',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: AppTheme.pageSubtitle,
               ),
               const SizedBox(height: 28),
               _buildCategoryFilter(),
@@ -136,30 +130,26 @@ class MyEntriesPageState extends State<MyEntriesPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'My experiences',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  const Text('My experiences', style: AppTheme.sectionTitle),
                   Row(
                     children: [
                       Text(
                         '${filteredEntries.length} entries',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTheme.caption,
                       ),
                       const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: isLoading ? null : fetchMyEntries,
-                        tooltip: 'Refresh entries',
-                        icon: const Icon(
-                          Icons.refresh_rounded,
-                          color: AppColors.primary,
+                      SizedBox(
+                        width: 38,
+                        height: 38,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Refresh entries',
+                          onPressed: isLoading ? null : fetchMyEntries,
+                          icon: const Icon(
+                            Icons.refresh_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],
@@ -170,7 +160,9 @@ class MyEntriesPageState extends State<MyEntriesPage> {
               if (isLoading)
                 const Padding(
                   padding: EdgeInsets.only(top: 100),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
                 )
               else if (errorMessage != null)
                 _buildMessage(
@@ -231,21 +223,13 @@ class MyEntriesPageState extends State<MyEntriesPage> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTheme.sectionTitle,
           ),
           const SizedBox(height: 8),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTheme.bodyText,
           ),
           const SizedBox(height: 20),
           OutlinedButton(

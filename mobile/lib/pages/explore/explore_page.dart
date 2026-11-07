@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/entry_grid_card.dart';
 
@@ -114,27 +115,13 @@ class ExplorePageState extends State<ExplorePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Find your next favorite.',
-          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 5),
-        const Text(
-          'Explore',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        const Text('Find your next favorite.', style: AppTheme.pageSubtitle),
+        const SizedBox(height: 4),
+        const Text('Explore', style: AppTheme.pageTitle),
         const SizedBox(height: 8),
         const Text(
           'Discover food and drinks shared by the Crave community.',
-          style: TextStyle(
-            fontSize: 12,
-            height: 1.5,
-            color: AppColors.textSecondary,
-          ),
+          style: AppTheme.bodyText,
         ),
       ],
     );
@@ -195,18 +182,11 @@ class ExplorePageState extends State<ExplorePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Categories',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        const Text('Categories', style: AppTheme.sectionTitle),
         const SizedBox(height: 5),
         Text(
-          '${entries.length} experiences • $foodCount food • $drinkCount drinks',
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          '${entries.length} experiences · $foodCount food · $drinkCount drinks',
+          style: AppTheme.caption,
         ),
         const SizedBox(height: 14),
         Row(
@@ -254,25 +234,11 @@ class ExplorePageState extends State<ExplorePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Discover experiences',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              '${results.length} posts',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
+            const Text('Discover experiences', style: AppTheme.sectionTitle),
+            Text('${results.length} posts', style: AppTheme.caption),
           ],
         ),
         const SizedBox(height: 16),
-
         if (isLoading)
           const Padding(
             padding: EdgeInsets.only(top: 60),
@@ -349,21 +315,13 @@ class ExplorePageState extends State<ExplorePage> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTheme.sectionTitle,
           ),
           const SizedBox(height: 8),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTheme.bodyText,
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onPressed, child: Text(buttonText)),

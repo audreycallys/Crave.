@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/entry_grid_card.dart';
 
@@ -18,11 +21,41 @@ class HomePageState extends State<HomePage> {
   bool isLoading = true;
   String? errorMessage;
   String selectedCategory = 'All';
+  String greetingName = 'foodies';
 
   @override
   void initState() {
     super.initState();
     fetchEntries();
+    fetchUserName();
+  }
+
+  Future<void> fetchUserName() async {
+    try {
+      final token = await ApiService.getToken();
+
+      if (token == null || token.isEmpty) return;
+
+      final parts = token.split('.');
+
+      if (parts.length != 3) return;
+
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+
+      if (payload is Map && payload['name'] != null) {
+        final fullName = payload['name'].toString().trim();
+
+        if (fullName.isNotEmpty && mounted) {
+          setState(() {
+            greetingName = fullName.split(RegExp(r'\s+')).first;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load user name: $e');
+    }
   }
 
   Future<void> fetchEntries() async {
@@ -103,36 +136,35 @@ class HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Good day, foodies!',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 5),
-            const Text(
-              'Discover',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Good day, $greetingName!', style: AppTheme.pageSubtitle),
+              const SizedBox(height: 4),
+              Text('Discover', style: AppTheme.pageTitle),
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         Container(
-          width: 44,
-          height: 44,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(13),
             border: Border.all(color: AppColors.border),
           ),
           child: IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
             tooltip: 'Refresh',
             onPressed: isLoading ? null : fetchEntries,
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
           ),
         ),
       ],
@@ -177,6 +209,7 @@ class HomePageState extends State<HomePage> {
               fontSize: 27,
               height: 1.2,
               fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -212,14 +245,7 @@ class HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Community overview',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        const Text('Community overview', style: AppTheme.sectionTitle),
         const SizedBox(height: 14),
         Row(
           children: [
@@ -277,14 +303,7 @@ class HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
-          ),
+          Text(label, textAlign: TextAlign.center, style: AppTheme.caption),
         ],
       ),
     );
@@ -296,14 +315,7 @@ class HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Explore categories',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        const Text('Explore categories', style: AppTheme.sectionTitle),
         const SizedBox(height: 14),
         Row(
           children: categories.map((category) {
@@ -348,28 +360,17 @@ class HomePageState extends State<HomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Recent experiences',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              '${filteredEntries.length} posts',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
+            const Text('Recent experiences', style: AppTheme.sectionTitle),
+            Text('${filteredEntries.length} posts', style: AppTheme.caption),
           ],
         ),
         const SizedBox(height: 16),
         if (isLoading)
           const Padding(
             padding: EdgeInsets.only(top: 60),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           )
         else if (errorMessage != null)
           _buildMessage(
@@ -438,21 +439,13 @@ class HomePageState extends State<HomePage> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTheme.sectionTitle,
           ),
           const SizedBox(height: 8),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTheme.bodyText,
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onPressed, child: Text(buttonText)),

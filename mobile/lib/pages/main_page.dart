@@ -18,10 +18,8 @@ class _MainPageState extends State<MainPage> {
   int selectedIndex = 0;
 
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
-
   final GlobalKey<MyEntriesPageState> _myEntriesKey =
       GlobalKey<MyEntriesPageState>();
-
   final GlobalKey<ExplorePageState> _exploreKey = GlobalKey<ExplorePageState>();
 
   void _refreshHomeEntries() {
@@ -42,6 +40,18 @@ class _MainPageState extends State<MainPage> {
     _refreshExploreEntries();
   }
 
+  void _onItemSelected(int index) {
+    if (index == selectedIndex) return;
+
+    if (index == 1) {
+      _refreshExploreEntries();
+    }
+
+    setState(() {
+      selectedIndex = index;
+    });
+  }
+
   late final List<Widget> pages = [
     HomePage(key: _homeKey, onEntryChanged: _refreshMyEntries),
     ExplorePage(key: _exploreKey),
@@ -57,11 +67,7 @@ class _MainPageState extends State<MainPage> {
       extendBody: true,
       bottomNavigationBar: FloatingBottomNav(
         selectedIndex: selectedIndex,
-        onItemSelected: (index) {
-          setState(() {
-            selectedIndex = index;
-          });
-        },
+        onItemSelected: _onItemSelected,
       ),
     );
   }
