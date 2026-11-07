@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
 import '../widgets/floating_bottom_nav.dart';
 import 'home/home_page.dart';
 import 'entries/my_entries_page.dart';
 import 'entries/add_entry_page.dart';
-import '../core/theme/app_colors.dart';
+import 'profile/profile_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -43,11 +44,7 @@ class _MainPageState extends State<MainPage> {
     ),
     AddEntryPage(onEntryCreated: _refreshAllEntries),
     MyEntriesPage(key: _myEntriesKey, onEntryChanged: _refreshHomeEntries),
-    const _PlaceholderPage(
-      title: 'Profile',
-      description: 'Manage your Crave account.',
-      icon: Icons.person_outline_rounded,
-    ),
+    const ProfilePage(),
   ];
 
   @override
@@ -88,13 +85,13 @@ class _PlaceholderPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 52, color: AppColors.primary),
+              Icon(icon, size: 60, color: AppColors.primary),
               const SizedBox(height: 16),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -102,10 +99,7 @@ class _PlaceholderPage extends StatelessWidget {
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ],
           ),

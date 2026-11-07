@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import 'register_page.dart';
 import '../../services/api_service.dart';
-import '../home/home_page.dart';
 import '../main_page.dart';
 
 class LoginPage extends StatefulWidget {
