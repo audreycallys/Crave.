@@ -140,8 +140,15 @@ class HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Good day, $greetingName!', style: AppTheme.pageSubtitle),
-              const SizedBox(height: 4),
+              Text(
+                'Good day, $greetingName!',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 5),
               Text('Discover', style: AppTheme.pageTitle),
             ],
           ),
