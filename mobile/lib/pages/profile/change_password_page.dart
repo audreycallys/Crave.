@@ -30,6 +30,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   }
 
   Future<void> changePassword() async {
+    if (isSaving) return;
+
     final currentPassword = currentPasswordController.text;
     final newPassword = newPasswordController.text;
     final confirmPassword = confirmPasswordController.text;
@@ -76,7 +78,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Password changed successfully.'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.primary,
         ),
       );
 
@@ -121,6 +123,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         TextField(
           controller: controller,
           obscureText: !isVisible,
+          enabled: !isSaving,
           enableSuggestions: false,
           autocorrect: false,
           style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
@@ -137,7 +140,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               vertical: 15,
             ),
             suffixIcon: IconButton(
-              onPressed: onToggle,
+              onPressed: isSaving ? null : onToggle,
               icon: Icon(
                 isVisible
                     ? Icons.visibility_off_outlined
