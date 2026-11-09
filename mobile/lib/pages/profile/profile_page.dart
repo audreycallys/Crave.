@@ -10,7 +10,9 @@ import 'change_password_page.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final VoidCallback? onProfileUpdated;
+
+  const ProfilePage({super.key, this.onProfileUpdated});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -122,6 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final entries = response['data']['entries'] as List;
 
       final newTotal = entries.length;
+
       final newPublic = entries.where((entry) {
         return entry['isPublic'] == true;
       }).length;
@@ -153,6 +156,8 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         user = updatedUser;
       });
+
+      widget.onProfileUpdated?.call();
     }
   }
 
