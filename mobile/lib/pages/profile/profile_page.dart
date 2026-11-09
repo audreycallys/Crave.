@@ -335,10 +335,10 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: ListTile(
         onTap: openChangePassword,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
-          width: 42,
-          height: 42,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: AppColors.primarySoft,
             borderRadius: BorderRadius.circular(14),
@@ -346,7 +346,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: const Icon(
             Icons.lock_outline_rounded,
             color: AppColors.primary,
-            size: 20,
+            size: 21,
           ),
         ),
         title: const Text(
@@ -366,6 +366,17 @@ class _ProfilePageState extends State<ProfilePage> {
           color: AppColors.textSecondary,
         ),
       ),
+    );
+  }
+
+  Widget buildAccountSettings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Account Settings', style: AppTheme.sectionTitle),
+        const SizedBox(height: 14),
+        buildChangePasswordTile(),
+      ],
     );
   }
 
@@ -469,8 +480,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    buildChangePasswordTile(),
+                    const SizedBox(height: 32),
+                    buildAccountSettings(),
                     const SizedBox(height: 28),
                     SizedBox(
                       height: 54,
