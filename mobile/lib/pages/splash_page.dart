@@ -77,19 +77,6 @@ class SplashPage extends StatelessWidget {
                               label: const Text('Get Started'),
                             ),
                           ),
-
-                          const SizedBox(height: 20),
-
-                          const Center(
-                            child: Text(
-                              'Save every flavor, remember every moment.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
                         ],
                       ),
                     ),
