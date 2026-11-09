@@ -1,5 +1,6 @@
 import { Router } from "express";
 import AuthController from "../../controllers/auth/auth.controller";
+import { authMiddleware } from "../../middleware/auth.middleware";
 
 const router = Router();
 
@@ -62,5 +63,41 @@ router.post("/register", AuthController.register);
  *         description: Login successful
  */
 router.post("/login", AuthController.login);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: oldpassword123
+ *               newPassword:
+ *                 type: string
+ *                 example: newpassword123
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Current password incorrect or validation failed
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.put("/change-password", authMiddleware, AuthController.changePassword);
 
 export default router;
