@@ -1,7 +1,7 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -42,12 +42,139 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
-  Future<void> pickProfilePhoto() async {
+  Future<bool> requestGalleryPermission() async {
+    if (kIsWeb) return true;
+
+    return true;
+  }
+
+  Future<void> showPhotoSourceOptions() async {
+    if (isSaving) return;
+
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Choose Photo Source',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text('Take a Photo'),
+                  onTap: () {
+                    Navigator.pop(context, ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () {
+                    Navigator.pop(context, ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (source == null || !mounted) return;
+
+    await pickProfilePhoto(source);
+  }
+
+  Future<bool> requestPhotoPermission(ImageSource source) async {
+    if (kIsWeb || source == ImageSource.gallery) {
+      return true;
+    }
+
+    final status = await Permission.camera.request();
+
+    if (status.isGranted) return true;
+
+    if (status.isPermanentlyDenied || status.isRestricted) {
+      if (mounted) {
+        await showPermissionSettingsDialog();
+      }
+      return false;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Camera permission is required.')),
+      );
+    }
+
+    return false;
+  }
+
+  Future<void> showPermissionSettingsDialog() async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Camera Permission'),
+          content: const Text(
+            'Camera access is disabled. Please allow it in your device settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                openAppSettings();
+              },
+              child: const Text(
+                'Open Settings',
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> pickProfilePhoto(ImageSource source) async {
     if (isSaving) return;
 
     try {
+      final hasPermission = await requestPhotoPermission(source);
+
+      if (!hasPermission || !mounted) return;
+
       final image = await picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 85,
         maxWidth: 1000,
       );
@@ -67,7 +194,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to select profile photo.')),
+        SnackBar(content: Text('Failed to select profile photo: $e')),
       );
     }
   }
@@ -316,7 +443,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           color: AppColors.primary,
                           shape: const CircleBorder(),
                           child: InkWell(
-                            onTap: isSaving ? null : pickProfilePhoto,
+                            onTap: isSaving ? null : showPhotoSourceOptions,
                             customBorder: const CircleBorder(),
                             child: const Padding(
                               padding: EdgeInsets.all(10),
@@ -333,7 +460,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed: isSaving ? null : pickProfilePhoto,
+                    onPressed: isSaving ? null : showPhotoSourceOptions,
                     child: const Text(
                       'Change Profile Photo',
                       style: TextStyle(

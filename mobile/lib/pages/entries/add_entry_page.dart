@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -23,19 +25,15 @@ class AddEntryPage extends StatefulWidget {
 
 class _AddEntryPageState extends State<AddEntryPage> {
   final _formKey = GlobalKey<FormState>();
-
   final menuNameController = TextEditingController();
   final placeNameController = TextEditingController();
   final priceController = TextEditingController();
   final notesController = TextEditingController();
-
   final ImagePicker imagePicker = ImagePicker();
 
   XFile? selectedPhoto;
-
   String selectedCategory = 'Food';
   DateTime selectedDate = DateTime.now();
-
   int selectedRating = 5;
   bool isPublic = false;
   bool isLoading = false;
@@ -55,7 +53,6 @@ class _AddEntryPageState extends State<AddEntryPage> {
       placeNameController.text = data['placeName']?.toString() ?? '';
       priceController.text = data['price']?.toString() ?? '';
       notesController.text = data['notes']?.toString() ?? '';
-
       selectedCategory = data['category']?.toString() ?? 'Food';
 
       selectedDate =
@@ -88,10 +85,135 @@ class _AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
-  Future<void> pickPhoto() async {
+  Future<bool> requestPhotoPermission(ImageSource source) async {
+    if (kIsWeb) return true;
+
+    if (source == ImageSource.gallery) {
+      return true;
+    }
+
+    final status = await Permission.camera.request();
+
+    if (status.isGranted) return true;
+
+    if (status.isPermanentlyDenied || status.isRestricted) {
+      if (mounted) {
+        await showPermissionSettingsDialog('Camera');
+      }
+      return false;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Camera permission is required.')),
+      );
+    }
+
+    return false;
+  }
+
+  Future<void> showPermissionSettingsDialog(String permissionName) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('$permissionName Permission'),
+          content: Text(
+            '$permissionName access is disabled. Please allow it in your device settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                openAppSettings();
+              },
+              child: const Text(
+                'Open Settings',
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> showPhotoSourceOptions() async {
+    if (isLoading) return;
+
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Choose Photo Source',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text('Take a Photo'),
+                  onTap: () {
+                    Navigator.pop(context, ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () {
+                    Navigator.pop(context, ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (source == null || !mounted) return;
+
+    await pickPhoto(source);
+  }
+
+  Future<void> pickPhoto(ImageSource source) async {
+    if (isLoading) return;
+
     try {
+      final hasPermission = await requestPhotoPermission(source);
+
+      if (!hasPermission || !mounted) return;
+
       final photo = await imagePicker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 80,
       );
 
@@ -148,7 +270,6 @@ class _AddEntryPageState extends State<AddEntryPage> {
 
   Future<void> submitEntry() async {
     if (isLoading) return;
-
     if (!_formKey.currentState!.validate()) return;
 
     if (!isEditMode && selectedPhoto == null) {
@@ -222,7 +343,6 @@ class _AddEntryPageState extends State<AddEntryPage> {
         );
 
         _formKey.currentState!.reset();
-
         menuNameController.clear();
         placeNameController.clear();
         priceController.clear();
@@ -352,7 +472,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
         ),
         SizedBox(height: 5),
         Text(
-          'Tap to choose from gallery',
+          'Tap to take a photo or choose from gallery',
+          textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
@@ -584,7 +705,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
                 children: [
                   _sectionTitle('Food Photo', required: !isEditMode),
                   GestureDetector(
-                    onTap: isLoading ? null : pickPhoto,
+                    onTap: isLoading ? null : showPhotoSourceOptions,
                     child: Container(
                       width: double.infinity,
                       height: 200,
