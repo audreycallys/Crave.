@@ -26,6 +26,10 @@ class _MainPageState extends State<MainPage> {
     _homeKey.currentState?.fetchEntries();
   }
 
+  void _refreshHomeProfile() {
+    _homeKey.currentState?.fetchProfile();
+  }
+
   void _refreshMyEntries() {
     _myEntriesKey.currentState?.fetchMyEntries();
   }
@@ -45,6 +49,10 @@ class _MainPageState extends State<MainPage> {
 
     if (index == 1) {
       _refreshExploreEntries();
+    }
+
+    if (index == 0 && selectedIndex == 4) {
+      _refreshHomeProfile();
     }
 
     setState(() {
