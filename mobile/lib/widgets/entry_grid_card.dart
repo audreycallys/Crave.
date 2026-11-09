@@ -77,84 +77,93 @@ class EntryGridCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => openDetail(context),
       child: Container(
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
         ),
-        clipBehavior: Clip.antiAlias,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildImage(photoUrl),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: _imageBadge(
-                      icon: category == 'Drink'
-                          ? Icons.local_cafe_rounded
-                          : Icons.restaurant_rounded,
-                      label: category,
+            Expanded(
+              flex: 5,
+              child: SizedBox.expand(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildImage(photoUrl),
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: _imageBadge(
+                        icon: category == 'Drink'
+                            ? Icons.local_cafe_rounded
+                            : Icons.restaurant_rounded,
+                        label: category,
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: _imageBadge(
-                      icon: Icons.star_rounded,
-                      label: '$rating/5',
-                      iconColor: const Color(0xFFD6A928),
-                      textColor: AppColors.textPrimary,
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: _imageBadge(
+                        icon: Icons.star_rounded,
+                        label: '$rating/5',
+                        iconColor: const Color(0xFFD6A928),
+                        textColor: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    menuName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      height: 1.2,
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 34,
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          menuName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  if (placeName.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    _detailItem(Icons.location_on_outlined, placeName),
-                  ],
-                  if (date.isNotEmpty) ...[
-                    const SizedBox(height: 5),
-                    _detailItem(Icons.calendar_today_rounded, date),
-                  ],
-                  const SizedBox(height: 8),
-                  const Divider(color: AppColors.border, height: 1),
-                  const SizedBox(height: 8),
-                  Text(
-                    formatPrice(entry['price'] ?? 0),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                    if (placeName.isNotEmpty) ...[
+                      const SizedBox(height: 7),
+                      _detailItem(Icons.location_on_outlined, placeName),
+                    ],
+                    if (date.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      _detailItem(Icons.calendar_today_rounded, date),
+                    ],
+                    const SizedBox(height: 7),
+                    const Divider(color: AppColors.border, height: 1),
+                    const SizedBox(height: 7),
+                    Text(
+                      formatPrice(entry['price'] ?? 0),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

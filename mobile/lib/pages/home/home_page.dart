@@ -364,27 +364,20 @@ class HomePageState extends State<HomePage> {
             },
           )
         else
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = (constraints.maxWidth - 12) / 2;
-              final textScale = MediaQuery.textScalerOf(context).scale(1);
-
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredEntries.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 14,
-                  mainAxisExtent: itemWidth + (220 * textScale),
-                ),
-                itemBuilder: (context, index) {
-                  return EntryGridCard(
-                    entry: Map<String, dynamic>.from(filteredEntries[index]),
-                    onEntryChanged: _handleEntryChanged,
-                  );
-                },
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filteredEntries.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.52,
+            ),
+            itemBuilder: (context, index) {
+              return EntryGridCard(
+                entry: Map<String, dynamic>.from(filteredEntries[index]),
+                onEntryChanged: _handleEntryChanged,
               );
             },
           ),
