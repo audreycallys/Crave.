@@ -43,6 +43,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> pickProfilePhoto() async {
+    if (isSaving) return;
+
     try {
       final image = await picker.pickImage(
         source: ImageSource.gallery,
@@ -128,6 +130,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> saveProfile() async {
+    if (isSaving) return;
+
     final name = nameController.text.trim();
     final bio = bioController.text.trim();
 
@@ -172,7 +176,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Profile updated successfully.'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.primary,
         ),
       );
 
@@ -216,6 +220,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         const SizedBox(height: 9),
         TextField(
           controller: controller,
+          enabled: !isSaving,
           maxLines: maxLines,
           maxLength: maxLength,
           textCapitalization: TextCapitalization.sentences,
