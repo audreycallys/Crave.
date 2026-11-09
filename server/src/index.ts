@@ -5,6 +5,7 @@ import swaggerSpec from "./config/swagger";
 import authRoute from "./routes/auth/auth.route";
 import entriesRoute from "./routes/entries/entries.route";
 import usersRoute from "./routes/users/users.route";
+import commentsRoute from "./routes/comments/comments.route";
 
 const app = express();
 const PORT = 5000;
@@ -20,6 +21,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoute);
 app.use("/api/entries", entriesRoute);
 app.use("/api/users", usersRoute);
+app.use("/api/comments", commentsRoute);
 
 app.get("/", (req, res) => {
   res.send("Hello! This is Crave Developer:)");
