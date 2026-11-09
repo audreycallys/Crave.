@@ -22,6 +22,9 @@ class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = true;
   bool isLoggingOut = false;
 
+  String? profileError;
+  String? activityError;
+
   int totalEntries = 0;
   int publicEntries = 0;
   int privateEntries = 0;
@@ -33,6 +36,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> fetchProfile() async {
+    if (!mounted) return;
+
+    setState(() {
+      profileError = null;
+      activityError = null;
+    });
+
+    final loadedUser = <String, dynamic>{};
+
+    int loadedTotalEntries = 0;
+    int loadedPublicEntries = 0;
+    int loadedPrivateEntries = 0;
+
     try {
       final token = await ApiService.getToken();
 
@@ -45,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
           );
 
           if (payload is Map) {
-            user = Map<String, dynamic>.from(payload);
+            loadedUser.addAll(Map<String, dynamic>.from(payload));
           }
         }
       }
@@ -53,13 +69,17 @@ class _ProfilePageState extends State<ProfilePage> {
       debugPrint('Failed to decode user token: $e');
     }
 
+    String? loadedProfileError;
+    String? loadedActivityError;
+
     try {
       final response = await ApiService.get('/users/profile');
 
       if (response['data'] is Map) {
-        user = Map<String, dynamic>.from(response['data']);
+        loadedUser.addAll(Map<String, dynamic>.from(response['data']));
       }
     } catch (e) {
+      loadedProfileError = e.toString().replaceFirst('Exception: ', '');
       debugPrint('Failed to load profile information: $e');
     }
 
@@ -67,20 +87,58 @@ class _ProfilePageState extends State<ProfilePage> {
       final response = await ApiService.get('/entries/my');
       final entries = response['data']['entries'] as List;
 
-      totalEntries = entries.length;
+      loadedTotalEntries = entries.length;
 
-      publicEntries = entries.where((entry) {
+      loadedPublicEntries = entries.where((entry) {
         return entry['isPublic'] == true;
       }).length;
 
-      privateEntries = totalEntries - publicEntries;
+      loadedPrivateEntries = loadedTotalEntries - loadedPublicEntries;
     } catch (e) {
+      loadedActivityError = e.toString().replaceFirst('Exception: ', '');
       debugPrint('Failed to load profile activity: $e');
     }
 
-    if (mounted) {
+    if (!mounted) return;
+
+    setState(() {
+      user = loadedUser;
+      totalEntries = loadedTotalEntries;
+      publicEntries = loadedPublicEntries;
+      privateEntries = loadedPrivateEntries;
+      profileError = loadedProfileError;
+      activityError = loadedActivityError;
+      isLoading = false;
+    });
+  }
+
+  Future<void> retryActivity() async {
+    setState(() {
+      activityError = null;
+    });
+
+    try {
+      final response = await ApiService.get('/entries/my');
+      final entries = response['data']['entries'] as List;
+
+      final newTotal = entries.length;
+      final newPublic = entries.where((entry) {
+        return entry['isPublic'] == true;
+      }).length;
+
+      if (!mounted) return;
+
       setState(() {
-        isLoading = false;
+        totalEntries = newTotal;
+        publicEntries = newPublic;
+        privateEntries = newTotal - newPublic;
+        activityError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        activityError = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -159,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
-    if (shouldLogout != true) return;
+    if (shouldLogout != true || !mounted) return;
 
     setState(() {
       isLoggingOut = true;
@@ -214,6 +272,34 @@ class _ProfilePageState extends State<ProfilePage> {
           buildActivityItem(title: 'Public', value: publicEntries),
           Container(width: 1, height: 38, color: AppColors.border),
           buildActivityItem(title: 'Private', value: privateEntries),
+        ],
+      ),
+    );
+  }
+
+  Widget buildErrorMessage({
+    required String message,
+    required VoidCallback onRetry,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.primary,
+            size: 28,
+          ),
+          const SizedBox(height: 8),
+          Text(message, textAlign: TextAlign.center, style: AppTheme.bodyText),
+          const SizedBox(height: 8),
+          TextButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
     );
@@ -441,13 +527,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 38),
                     const Text('Your Activity', style: AppTheme.sectionTitle),
                     const SizedBox(height: 14),
-                    buildActivityCard(),
+                    if (activityError != null)
+                      buildErrorMessage(
+                        message: 'Unable to load activity: $activityError',
+                        onRetry: retryActivity,
+                      )
+                    else
+                      buildActivityCard(),
                     const SizedBox(height: 28),
                     const Text(
                       'Account Information',
                       style: AppTheme.sectionTitle,
                     ),
                     const SizedBox(height: 12),
+                    if (profileError != null) ...[
+                      buildErrorMessage(
+                        message: 'Unable to refresh profile: $profileError',
+                        onRetry: fetchProfile,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
