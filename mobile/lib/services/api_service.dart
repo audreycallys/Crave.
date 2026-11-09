@@ -214,4 +214,20 @@ class ApiService {
 
     return _handleResponse(response);
   }
+
+  static Future<dynamic> getComments(String entryId) async {
+    return get('/comments/entries/$entryId');
+  }
+
+  static Future<dynamic> createComment(String entryId, String content) async {
+    return post('/comments/entries/$entryId', {'content': content});
+  }
+
+  static Future<dynamic> updateComment(String commentId, String content) async {
+    return put('/comments/$commentId', {'content': content});
+  }
+
+  static Future<dynamic> deleteComment(String commentId) async {
+    return delete('/comments/$commentId');
+  }
 }
