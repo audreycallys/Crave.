@@ -42,8 +42,17 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> checkToken() async {
+    final startTime = DateTime.now();
+
     try {
       final token = await ApiService.getToken();
+
+      final elapsed = DateTime.now().difference(startTime);
+      final remaining = const Duration(seconds: 1) - elapsed;
+
+      if (remaining > Duration.zero) {
+        await Future.delayed(remaining);
+      }
 
       if (!mounted) return;
 
@@ -52,6 +61,13 @@ class _AuthGateState extends State<AuthGate> {
         isChecking = false;
       });
     } catch (e) {
+      final elapsed = DateTime.now().difference(startTime);
+      final remaining = const Duration(seconds: 1) - elapsed;
+
+      if (remaining > Duration.zero) {
+        await Future.delayed(remaining);
+      }
+
       if (!mounted) return;
 
       setState(() {

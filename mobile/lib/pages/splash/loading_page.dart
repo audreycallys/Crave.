@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -14,7 +13,7 @@ class LoadingPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
+            const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
@@ -22,20 +21,20 @@ class LoadingPage extends StatelessWidget {
                   size: 27,
                   color: AppColors.primary,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 10),
                 Text(
                   'crave.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 30,
+                  style: TextStyle(
+                    fontSize: 25,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
                     letterSpacing: -1.2,
+                    color: AppColors.primary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 28),
-            SizedBox(
+            const SizedBox(
               width: 22,
               height: 22,
               child: CircularProgressIndicator(
