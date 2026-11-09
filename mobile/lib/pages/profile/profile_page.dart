@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../auth/login_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -47,7 +48,21 @@ class _ProfilePageState extends State<ProfilePage> {
           }
         }
       }
+    } catch (e) {
+      debugPrint('Failed to decode user token: $e');
+    }
 
+    try {
+      final response = await ApiService.get('/users/profile');
+
+      if (response['data'] is Map) {
+        user = Map<String, dynamic>.from(response['data']);
+      }
+    } catch (e) {
+      debugPrint('Failed to load profile information: $e');
+    }
+
+    try {
       final response = await ApiService.get('/entries/my');
       final entries = response['data']['entries'] as List;
 
@@ -59,12 +74,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
       privateEntries = totalEntries - publicEntries;
     } catch (e) {
-      debugPrint('Failed to load profile: $e');
+      debugPrint('Failed to load profile activity: $e');
     }
 
     if (mounted) {
       setState(() {
         isLoading = false;
+      });
+    }
+  }
+
+  Future<void> openEditProfile() async {
+    final updatedUser = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
+    );
+
+    if (updatedUser != null && mounted) {
+      setState(() {
+        user = updatedUser;
       });
     }
   }
@@ -209,7 +237,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text(title, style: AppTheme.caption),
                 const SizedBox(height: 4),
                 Text(
-                  value,
+                  value.isEmpty ? '-' : value,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -224,10 +252,77 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget buildProfileAvatar() {
+    final photoUrl = user['profilePhotoUrl']?.toString() ?? '';
+
+    return Container(
+      width: 116,
+      height: 116,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.primarySoft,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Center(
+        child: Container(
+          width: 96,
+          height: 96,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF7771D1), AppColors.primary],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: photoUrl.isNotEmpty
+                ? Image.network(
+                    photoUrl,
+                    width: 96,
+                    height: 96,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Center(
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = user['name']?.toString() ?? 'Crave User';
     final email = user['email']?.toString() ?? '-';
+    final bio = user['bio']?.toString() ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -248,55 +343,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Center(
                       child: Column(
                         children: [
-                          Container(
-                            width: 116,
-                            height: 116,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primarySoft,
-                              border: Border.all(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.15,
-                                ),
-                              ),
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 96,
-                                height: 96,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF7771D1),
-                                      AppColors.primary,
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      blurRadius: 14,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    initials,
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          buildProfileAvatar(),
                           const SizedBox(height: 18),
                           Text(
                             name,
@@ -309,6 +356,23 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 6),
                           Text(email, style: AppTheme.pageSubtitle),
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: openEditProfile,
+                            icon: const Icon(Icons.edit_outlined, size: 17),
+                            label: const Text('Edit Profile'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 11,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -344,6 +408,12 @@ class _ProfilePageState extends State<ProfilePage> {
                             icon: Icons.email_outlined,
                             title: 'Email Address',
                             value: email,
+                          ),
+                          const Divider(color: AppColors.border),
+                          buildInfoTile(
+                            icon: Icons.notes_rounded,
+                            title: 'Bio',
+                            value: bio,
                           ),
                         ],
                       ),
