@@ -110,6 +110,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<void> selectDate() async {
+    if (isLoading) return;
+
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -145,6 +147,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<void> submitEntry() async {
+    if (isLoading) return;
+
     if (!_formKey.currentState!.validate()) return;
 
     if (!isEditMode && selectedPhoto == null) {
@@ -306,7 +310,9 @@ class _AddEntryPageState extends State<AddEntryPage> {
             );
           }
 
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
         },
       );
     }
@@ -362,11 +368,13 @@ class _AddEntryPageState extends State<AddEntryPage> {
 
         return Expanded(
           child: GestureDetector(
-            onTap: () {
-              setState(() {
-                selectedCategory = category;
-              });
-            },
+            onTap: isLoading
+                ? null
+                : () {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                  },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: EdgeInsets.only(
@@ -420,11 +428,13 @@ class _AddEntryPageState extends State<AddEntryPage> {
         final isSelected = rating <= selectedRating;
 
         return GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedRating = rating;
-            });
-          },
+          onTap: isLoading
+              ? null
+              : () {
+                  setState(() {
+                    selectedRating = rating;
+                  });
+                },
           child: Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Icon(
@@ -467,11 +477,13 @@ class _AddEntryPageState extends State<AddEntryPage> {
     final isSelected = isPublic == value;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          isPublic = value;
-        });
-      },
+      onTap: isLoading
+          ? null
+          : () {
+              setState(() {
+                isPublic = value;
+              });
+            },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -612,6 +624,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
                   _sectionTitle('Menu Name', required: true),
                   TextFormField(
                     controller: menuNameController,
+                    enabled: !isLoading,
                     textCapitalization: TextCapitalization.words,
                     decoration: _inputDecoration('e.g. Hawaiian Pizza'),
                     validator: (value) {
@@ -625,6 +638,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
                   _sectionTitle('Place Name'),
                   TextFormField(
                     controller: placeNameController,
+                    enabled: !isLoading,
                     textCapitalization: TextCapitalization.words,
                     decoration: _inputDecoration('Where did you try it?'),
                   ),
@@ -642,6 +656,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
                             _sectionTitle('Price', required: true),
                             TextFormField(
                               controller: priceController,
+                              enabled: !isLoading,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
@@ -715,6 +730,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
                   _sectionTitle('Notes'),
                   TextFormField(
                     controller: notesController,
+                    enabled: !isLoading,
                     maxLines: 4,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: _inputDecoration(
