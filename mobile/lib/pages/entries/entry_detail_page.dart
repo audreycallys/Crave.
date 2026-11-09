@@ -29,7 +29,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   bool get isOwner {
     if (entry == null || currentUserId == null) return false;
-
     return entry!['userId']?.toString() == currentUserId.toString();
   }
 
@@ -131,7 +130,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       if (!mounted) return;
 
       commentController.clear();
-
       FocusScope.of(context).unfocus();
 
       await fetchComments();
@@ -322,6 +320,31 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
   }
 
+  String formatCommentDate(dynamic date) {
+    if (date == null) return '';
+
+    final parsedDate = DateTime.tryParse(date.toString());
+
+    if (parsedDate == null) return '';
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
+  }
+
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -375,6 +398,13 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   Widget _buildContent() {
     final photoUrl = entry!['photoUrl']?.toString() ?? '';
     final category = entry!['category']?.toString() ?? 'Food';
+
+    final user = entry!['user'] is Map
+        ? Map<String, dynamic>.from(entry!['user'])
+        : <String, dynamic>{};
+
+    final userName = user['name']?.toString() ?? 'User';
+    final userPhoto = user['profilePhotoUrl']?.toString() ?? '';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
@@ -434,9 +464,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 : _imagePlaceholder(),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 18),
+        _buildOwnerInfo(userName, userPhoto),
+        const SizedBox(height: 22),
         _buildCategoryAndRating(category),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Text(
           entry!['menuName']?.toString() ?? 'Untitled',
           style: const TextStyle(
@@ -445,11 +477,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 18),
         _buildInformation(),
         const SizedBox(height: 26),
         const Text(
-          'My Notes',
+          'Experience Notes',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -477,6 +509,188 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           ),
         ),
         if (isPublic) ...[const SizedBox(height: 30), _buildCommentsSection()],
+      ],
+    );
+  }
+
+  Widget _buildOwnerInfo(String name, String photoUrl) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 21,
+          backgroundColor: AppColors.primarySoft,
+          backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+          child: photoUrl.isEmpty
+              ? const Icon(
+                  Icons.person_rounded,
+                  size: 22,
+                  color: AppColors.primary,
+                )
+              : null,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'Food experience',
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+        if (isOwner)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isPublic ? AppColors.primarySoft : AppColors.background,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isPublic ? Icons.public_rounded : Icons.lock_outline_rounded,
+                  size: 13,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  isPublic ? 'Public' : 'Private',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryAndRating(String category) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            category,
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            const Icon(Icons.star_rounded, color: Color(0xFFD6A928), size: 20),
+            const SizedBox(width: 5),
+            Text(
+              '${entry!['rating'] ?? 0}/5',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInformation() {
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _infoRow(
+            Icons.location_on_outlined,
+            'Place',
+            entry!['placeName']?.toString().isNotEmpty == true
+                ? entry!['placeName'].toString()
+                : '-',
+          ),
+          const Divider(height: 24, color: AppColors.border),
+          _infoRow(
+            Icons.calendar_today_outlined,
+            'Date tried',
+            formatDate(entry!['dateTried']),
+          ),
+          const Divider(height: 24, color: AppColors.border),
+          _infoRow(
+            Icons.payments_outlined,
+            'Price',
+            formatPrice(entry!['price'] ?? 0),
+          ),
+          if (isOwner) ...[
+            const Divider(height: 24, color: AppColors.border),
+            _infoRow(
+              Icons.visibility_outlined,
+              'Visibility',
+              isPublic ? 'Public' : 'Private',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 19),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 76,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -655,7 +869,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
                 radius: 17,
@@ -754,141 +967,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           ),
         ],
       ),
-    );
-  }
-
-  String formatCommentDate(dynamic date) {
-    if (date == null) return '';
-
-    final parsedDate = DateTime.tryParse(date.toString());
-
-    if (parsedDate == null) return '';
-
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
-  }
-
-  Widget _buildCategoryAndRating(String category) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            category,
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Row(
-          children: [
-            const Icon(Icons.star_rounded, color: Color(0xFFD6A928), size: 20),
-            const SizedBox(width: 5),
-            Text(
-              '${entry!['rating'] ?? 0}/5',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInformation() {
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          _infoRow(
-            Icons.location_on_outlined,
-            'Place',
-            entry!['placeName']?.toString().isNotEmpty == true
-                ? entry!['placeName'].toString()
-                : '-',
-          ),
-          const Divider(height: 24, color: AppColors.border),
-          _infoRow(
-            Icons.calendar_today_outlined,
-            'Date tried',
-            formatDate(entry!['dateTried']),
-          ),
-          const Divider(height: 24, color: AppColors.border),
-          _infoRow(
-            Icons.payments_outlined,
-            'Price',
-            formatPrice(entry!['price'] ?? 0),
-          ),
-          const Divider(height: 24, color: AppColors.border),
-          _infoRow(
-            Icons.public_rounded,
-            'Visibility',
-            isPublic ? 'Public' : 'Private',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColors.primary, size: 19),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 76,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            softWrap: true,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
