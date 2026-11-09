@@ -44,6 +44,14 @@ class _MainPageState extends State<MainPage> {
     _refreshExploreEntries();
   }
 
+  void _onEntryCreated() {
+    _refreshAllEntries();
+
+    setState(() {
+      selectedIndex = 0;
+    });
+  }
+
   void _onItemSelected(int index) {
     if (index == selectedIndex) return;
 
@@ -88,7 +96,7 @@ class _MainPageState extends State<MainPage> {
       onExploreTap: _openExplore,
     ),
     ExplorePage(key: _exploreKey),
-    AddEntryPage(onEntryCreated: _refreshAllEntries, onClose: _closeAddEntry),
+    AddEntryPage(onEntryCreated: _onEntryCreated, onClose: _closeAddEntry),
     MyEntriesPage(key: _myEntriesKey, onEntryChanged: _refreshHomeEntries),
     const ProfilePage(),
   ];
