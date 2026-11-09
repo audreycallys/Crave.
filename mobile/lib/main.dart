@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
-import 'pages/splash_page.dart';
+import 'pages/splash/splash_page.dart';
+import 'pages/splash/loading_page.dart';
 import 'services/api_service.dart';
 import 'pages/main_page.dart';
 
@@ -63,7 +64,7 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     if (isChecking) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const LoadingPage();
     }
 
     return isLoggedIn ? const MainPage() : const SplashPage();
