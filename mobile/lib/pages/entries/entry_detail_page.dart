@@ -16,9 +16,16 @@ class EntryDetailPage extends StatefulWidget {
 class _EntryDetailPageState extends State<EntryDetailPage> {
   Map<String, dynamic>? entry;
   int? currentUserId;
+
   bool isLoading = true;
   bool hasChanges = false;
   String? errorMessage;
+
+  final TextEditingController commentController = TextEditingController();
+
+  List<Map<String, dynamic>> comments = [];
+  bool isCommentsLoading = false;
+  bool isSubmittingComment = false;
 
   bool get isOwner {
     if (entry == null || currentUserId == null) return false;
@@ -26,10 +33,18 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     return entry!['userId']?.toString() == currentUserId.toString();
   }
 
+  bool get isPublic => entry?['isPublic'] == true;
+
   @override
   void initState() {
     super.initState();
     fetchDetail();
+  }
+
+  @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchDetail() async {
@@ -49,6 +64,14 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         currentUserId = userId;
         isLoading = false;
       });
+
+      if (isPublic) {
+        await fetchComments();
+      } else {
+        setState(() {
+          comments = [];
+        });
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -56,6 +79,191 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         errorMessage = e.toString().replaceFirst('Exception: ', '');
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> fetchComments() async {
+    if (!isPublic) return;
+
+    setState(() {
+      isCommentsLoading = true;
+    });
+
+    try {
+      final response = await ApiService.getComments(widget.entryId);
+      final data = response['data']['comments'] as List;
+
+      if (!mounted) return;
+
+      setState(() {
+        comments = data.map((item) => Map<String, dynamic>.from(item)).toList();
+        isCommentsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isCommentsLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to load comments: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> addComment() async {
+    final content = commentController.text.trim();
+
+    if (content.isEmpty || isSubmittingComment) return;
+
+    setState(() {
+      isSubmittingComment = true;
+    });
+
+    try {
+      await ApiService.createComment(widget.entryId, content);
+
+      if (!mounted) return;
+
+      commentController.clear();
+
+      FocusScope.of(context).unfocus();
+
+      await fetchComments();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to add comment: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmittingComment = false;
+        });
+      }
+    }
+  }
+
+  Future<void> editComment(Map<String, dynamic> comment) async {
+    final controller = TextEditingController(
+      text: comment['content']?.toString() ?? '',
+    );
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Edit Comment'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 4,
+            maxLength: 1000,
+            decoration: const InputDecoration(
+              hintText: 'Write your comment...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final content = controller.text.trim();
+
+                if (content.isNotEmpty) {
+                  Navigator.pop(dialogContext, content);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (result == null || !mounted) return;
+
+    try {
+      await ApiService.updateComment(comment['id'].toString(), result);
+
+      if (!mounted) return;
+
+      await fetchComments();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comment updated successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update comment: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> deleteComment(Map<String, dynamic> comment) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Comment?'),
+          content: const Text('Are you sure you want to delete this comment?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      await ApiService.deleteComment(comment['id'].toString());
+
+      if (!mounted) return;
+
+      await fetchComments();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comment deleted successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to delete comment: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
     }
   }
 
@@ -266,8 +474,310 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             ),
           ),
         ),
+        if (isPublic) ...[const SizedBox(height: 30), _buildCommentsSection()],
       ],
     );
+  }
+
+  Widget _buildCommentsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Comments',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                comments.length.toString(),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildCommentInput(),
+        const SizedBox(height: 20),
+        if (isCommentsLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (comments.isEmpty)
+          _buildEmptyComments()
+        else
+          ...comments.map(_buildCommentCard),
+      ],
+    );
+  }
+
+  Widget _buildCommentInput() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          TextField(
+            controller: commentController,
+            maxLines: 3,
+            minLines: 1,
+            maxLength: 1000,
+            decoration: const InputDecoration(
+              hintText: 'Share your thoughts...',
+              hintStyle: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+              border: InputBorder.none,
+              counterText: '',
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 38,
+            child: ElevatedButton(
+              onPressed: isSubmittingComment ? null : addComment,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: isSubmittingComment
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Post Comment',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyComments() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.chat_bubble_outline_rounded,
+            size: 30,
+            color: AppColors.textSecondary,
+          ),
+          SizedBox(height: 10),
+          Text(
+            'No comments yet',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Be the first to share your thoughts.',
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentCard(Map<String, dynamic> comment) {
+    final user = comment['user'] is Map
+        ? Map<String, dynamic>.from(comment['user'])
+        : <String, dynamic>{};
+
+    final commentUserId = comment['userId']?.toString();
+    final isCommentOwner = commentUserId == currentUserId?.toString();
+    final canDelete = isCommentOwner || isOwner;
+
+    final name = user['name']?.toString() ?? 'User';
+    final photoUrl = user['profilePhotoUrl']?.toString() ?? '';
+    final content = comment['content']?.toString() ?? '';
+    final date = formatCommentDate(comment['createdAt']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 17,
+                backgroundColor: AppColors.primarySoft,
+                backgroundImage: photoUrl.isNotEmpty
+                    ? NetworkImage(photoUrl)
+                    : null,
+                child: photoUrl.isEmpty
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 19,
+                        color: AppColors.primary,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isCommentOwner || canDelete)
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(
+                    Icons.more_horiz_rounded,
+                    color: AppColors.textSecondary,
+                    size: 21,
+                  ),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      editComment(comment);
+                    } else if (value == 'delete') {
+                      deleteComment(comment);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    if (isCommentOwner)
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 18),
+                            SizedBox(width: 10),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                    if (canDelete)
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.red,
+                              size: 18,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.6,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String formatCommentDate(dynamic date) {
+    if (date == null) return '';
+
+    final parsedDate = DateTime.tryParse(date.toString());
+
+    if (parsedDate == null) return '';
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
   }
 
   Widget _buildCategoryAndRating(String category) {
@@ -340,7 +850,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           _infoRow(
             Icons.public_rounded,
             'Visibility',
-            entry!['isPublic'] == true ? 'Public' : 'Private',
+            isPublic ? 'Public' : 'Private',
           ),
         ],
       ),
