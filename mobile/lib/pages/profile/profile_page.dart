@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../auth/login_page.dart';
+import 'change_password_page.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -95,6 +96,13 @@ class _ProfilePageState extends State<ProfilePage> {
         user = updatedUser;
       });
     }
+  }
+
+  Future<void> openChangePassword() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+    );
   }
 
   String get initials {
@@ -318,6 +326,49 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget buildChangePasswordTile() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ListTile(
+        onTap: openChangePassword,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(
+            Icons.lock_outline_rounded,
+            color: AppColors.primary,
+            size: 20,
+          ),
+        ),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        subtitle: const Text(
+          'Update your account password',
+          style: AppTheme.caption,
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = user['name']?.toString() ?? 'Crave User';
@@ -418,6 +469,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    buildChangePasswordTile(),
                     const SizedBox(height: 28),
                     SizedBox(
                       height: 54,
