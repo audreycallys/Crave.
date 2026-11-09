@@ -25,6 +25,8 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   List<dynamic> entries = [];
+  Map<String, dynamic>? userProfile;
+
   bool isLoading = true;
   String? errorMessage;
   String selectedCategory = 'All';
@@ -33,6 +35,7 @@ class HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     fetchEntries();
+    fetchProfile();
   }
 
   Future<void> fetchEntries() async {
@@ -62,6 +65,24 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> fetchProfile() async {
+    try {
+      final response = await ApiService.get('/users/profile');
+
+      if (!mounted) return;
+
+      setState(() {
+        userProfile = Map<String, dynamic>.from(response['data']);
+      });
+    } catch (e) {
+      debugPrint('Failed to load home profile: $e');
+    }
+  }
+
+  Future<void> refreshHome() async {
+    await Future.wait([fetchEntries(), fetchProfile()]);
+  }
+
   Future<void> _handleEntryChanged() async {
     await fetchEntries();
     widget.onEntryChanged?.call();
@@ -81,13 +102,50 @@ class HomePageState extends State<HomePage> {
   int get drinkCount =>
       entries.where((entry) => entry['category'] == 'Drink').length;
 
+  Widget _buildProfileAvatar() {
+    final photoUrl = userProfile?['profilePhotoUrl']?.toString();
+
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(13),
+        child: photoUrl != null && photoUrl.isNotEmpty
+            ? Image.network(
+                photoUrl,
+                key: ValueKey(photoUrl),
+                width: 42,
+                height: 42,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.person_outline_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  );
+                },
+              )
+            : const Icon(
+                Icons.person_outline_rounded,
+                color: AppColors.primary,
+                size: 22,
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: fetchEntries,
+          onRefresh: refreshHome,
           color: AppColors.primary,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -134,24 +192,9 @@ class HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: IconButton(
-            onPressed: widget.onProfileTap,
-            tooltip: 'Profile',
-            padding: EdgeInsets.zero,
-            icon: const Icon(
-              Icons.person_outline_rounded,
-              color: AppColors.primary,
-              size: 22,
-            ),
-          ),
+        GestureDetector(
+          onTap: widget.onProfileTap,
+          child: _buildProfileAvatar(),
         ),
       ],
     );
