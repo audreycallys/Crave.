@@ -21,6 +21,9 @@ export const usersTable = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 100 }).notNull().unique(),
+  bio: text("bio"),
+  profilePhotoUrl: varchar("profile_photo_url", { length: 500 }),
+  profilePhotoPublicId: varchar("profile_photo_public_id", { length: 255 }),
   password: varchar("password", { length: 255 }).notNull(),
   role: mysqlEnum("role", USER_ROLES).notNull().default("user"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -50,6 +53,19 @@ export const foodEntriesTable = mysqlTable("food_entries", {
   photoPublicId: varchar("photo_public_id", { length: 255 }),
   isPublic: boolean("is_public").notNull().default(false),
   notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+export const commentsTable = mysqlTable("comments", {
+  id: int("id").autoincrement().primaryKey(),
+  entryId: int("entry_id")
+    .notNull()
+    .references(() => foodEntriesTable.id, { onDelete: "cascade" }),
+  userId: int("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
