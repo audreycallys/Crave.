@@ -57,6 +57,12 @@ class _RegisterPageState extends State<RegisterPage> {
           backgroundColor: AppColors.primary,
         ),
       );
+
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
     } catch (error) {
       if (!mounted) return;
 

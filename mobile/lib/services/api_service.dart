@@ -6,7 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:5000/api';
+  static const String _baseUrl = 'http://192.168.1.4:5000/api';
   static const String _tokenKey = 'token';
 
   static Future<void> saveToken(String token) async {
