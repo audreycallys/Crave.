@@ -359,7 +359,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         backgroundColor: AppColors.background,
         body: SafeArea(
           child: isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                )
               : errorMessage != null
               ? _buildError()
               : entry == null
@@ -518,7 +520,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           const Center(
             child: Padding(
               padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: AppColors.primary),
             ),
           )
         else if (comments.isEmpty)
