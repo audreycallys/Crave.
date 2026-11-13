@@ -543,11 +543,6 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 3),
-              const Text(
-                'Food experience',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
             ],
           ),
         ),
