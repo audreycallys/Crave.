@@ -11,6 +11,7 @@ class EntryGridCard extends StatelessWidget {
 
   String formatPrice(dynamic price) {
     final amount = double.tryParse(price.toString());
+
     if (amount == null) return price.toString();
 
     final formatted = amount
@@ -24,6 +25,7 @@ class EntryGridCard extends StatelessWidget {
     if (date == null || date.toString().isEmpty) return '';
 
     final parsedDate = DateTime.tryParse(date.toString());
+
     if (parsedDate == null) return date.toString();
 
     const months = [
@@ -46,6 +48,7 @@ class EntryGridCard extends StatelessWidget {
 
   Future<void> openDetail(BuildContext context) async {
     final entryId = entry['id'];
+
     if (entryId == null) return;
 
     final result = await Navigator.push<bool>(
@@ -83,7 +86,9 @@ class EntryGridCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
+            SizedBox(
+              height: 150,
+              width: double.infinity,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -117,34 +122,28 @@ class EntryGridCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    height: 34,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        menuName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          height: 1.2,
-                        ),
-                      ),
+                  Text(
+                    menuName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      height: 1.2,
                     ),
                   ),
                   if (placeName.isNotEmpty) ...[
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 7),
                     _detailItem(Icons.location_on_outlined, placeName),
                   ],
                   if (date.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     _detailItem(Icons.calendar_today_rounded, date),
                   ],
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 8),
                   const Divider(color: AppColors.border, height: 1),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 8),
                   Text(
                     formatPrice(entry['price'] ?? 0),
                     maxLines: 1,
@@ -165,7 +164,9 @@ class EntryGridCard extends StatelessWidget {
   }
 
   Widget _buildImage(String photoUrl) {
-    if (photoUrl.isEmpty) return _imagePlaceholder();
+    if (photoUrl.isEmpty) {
+      return _imagePlaceholder();
+    }
 
     return Image.network(
       photoUrl,

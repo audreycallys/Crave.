@@ -372,7 +372,7 @@ class HomePageState extends State<HomePage> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 14,
-              childAspectRatio: 0.52,
+              childAspectRatio: 0.58,
             ),
             itemBuilder: (context, index) {
               return EntryGridCard(
