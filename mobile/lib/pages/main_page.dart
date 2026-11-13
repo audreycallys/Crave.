@@ -18,10 +18,8 @@ class _MainPageState extends State<MainPage> {
   int selectedIndex = 0;
 
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
-
   final GlobalKey<MyEntriesPageState> _myEntriesKey =
       GlobalKey<MyEntriesPageState>();
-
   final GlobalKey<ExplorePageState> _exploreKey = GlobalKey<ExplorePageState>();
 
   void _refreshHomeEntries() {
@@ -84,6 +82,12 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void _openAddEntry() {
+    setState(() {
+      selectedIndex = 2;
+    });
+  }
+
   void _closeAddEntry() {
     setState(() {
       selectedIndex = 0;
@@ -96,6 +100,7 @@ class _MainPageState extends State<MainPage> {
       onEntryChanged: _refreshMyEntries,
       onProfileTap: _openProfile,
       onExploreTap: _openExplore,
+      onAddEntryTap: _openAddEntry,
     ),
     ExplorePage(key: _exploreKey),
     AddEntryPage(onEntryCreated: _onEntryCreated, onClose: _closeAddEntry),

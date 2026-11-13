@@ -4,19 +4,20 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../widgets/entry_grid_card.dart';
-import '../../widgets/food_diary_calendar.dart';
 import '../../widgets/category_filter.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback? onEntryChanged;
   final VoidCallback? onProfileTap;
   final VoidCallback? onExploreTap;
+  final VoidCallback? onAddEntryTap;
 
   const HomePage({
     super.key,
     this.onEntryChanged,
     this.onProfileTap,
     this.onExploreTap,
+    this.onAddEntryTap,
   });
 
   @override
@@ -154,8 +155,8 @@ class HomePageState extends State<HomePage> {
               _buildHeader(),
               const SizedBox(height: 28),
               _buildIntro(),
-              const SizedBox(height: 20),
-              const FoodDiaryCalendar(),
+              const SizedBox(height: 22),
+              _buildQuickAction(),
               const SizedBox(height: 28),
               _buildStatistics(),
               const SizedBox(height: 28),
@@ -204,13 +205,92 @@ class HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('What are you craving?', style: AppTheme.pageTitle),
+        const Text('Good food, good moments.', style: AppTheme.pageTitle),
         const SizedBox(height: 8),
         const Text(
           'Discover new flavors and memorable experiences.',
           style: AppTheme.bodyText,
         ),
       ],
+    );
+  }
+
+  Widget _buildQuickAction() {
+    return Material(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: widget.onAddEntryTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.09),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: const Icon(
+                  Icons.add_a_photo_outlined,
+                  color: AppColors.primary,
+                  size: 27,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tried Something Delicious?',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Save the moment and share your experience with others.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.4,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Text(
+                          'Add New Entry',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 15,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
