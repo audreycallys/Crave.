@@ -77,24 +77,25 @@ class EntryGridCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => openDetail(context),
       child: Container(
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
         ),
-        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 1,
+            SizedBox(
+              height: 150,
+              width: double.infinity,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   _buildImage(photoUrl),
                   Positioned(
-                    top: 10,
-                    left: 10,
+                    top: 8,
+                    left: 8,
                     child: _imageBadge(
                       icon: category == 'Drink'
                           ? Icons.local_cafe_rounded
@@ -103,8 +104,8 @@ class EntryGridCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: 10,
-                    right: 10,
+                    top: 8,
+                    right: 8,
                     child: _imageBadge(
                       icon: Icons.star_rounded,
                       label: '$rating/5',
@@ -116,37 +117,33 @@ class EntryGridCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    height: 38,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        menuName,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          height: 1.25,
-                        ),
-                      ),
+                  Text(
+                    menuName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  if (placeName.isNotEmpty)
+                  if (placeName.isNotEmpty) ...[
+                    const SizedBox(height: 7),
                     _detailItem(Icons.location_on_outlined, placeName),
+                  ],
                   if (date.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     _detailItem(Icons.calendar_today_rounded, date),
                   ],
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   const Divider(color: AppColors.border, height: 1),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     formatPrice(entry['price'] ?? 0),
                     maxLines: 1,
@@ -167,7 +164,9 @@ class EntryGridCard extends StatelessWidget {
   }
 
   Widget _buildImage(String photoUrl) {
-    if (photoUrl.isEmpty) return _imagePlaceholder();
+    if (photoUrl.isEmpty) {
+      return _imagePlaceholder();
+    }
 
     return Image.network(
       photoUrl,
@@ -185,7 +184,7 @@ class EntryGridCard extends StatelessWidget {
     Color textColor = AppColors.primary,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
@@ -193,7 +192,7 @@ class EntryGridCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: iconColor),
+          Icon(icon, size: 11, color: iconColor),
           const SizedBox(width: 4),
           Text(
             label,
@@ -211,8 +210,8 @@ class EntryGridCard extends StatelessWidget {
   Widget _detailItem(IconData icon, String value) {
     return Row(
       children: [
-        Icon(icon, size: 13, color: AppColors.textSecondary),
-        const SizedBox(width: 5),
+        Icon(icon, size: 12, color: AppColors.textSecondary),
+        const SizedBox(width: 4),
         Expanded(
           child: Text(
             value,

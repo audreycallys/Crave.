@@ -6,9 +6,13 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../auth/login_page.dart';
+import 'change_password_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final VoidCallback? onProfileUpdated;
+
+  const ProfilePage({super.key, this.onProfileUpdated});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -19,6 +23,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool isLoading = true;
   bool isLoggingOut = false;
+
+  String? profileError;
+  String? activityError;
 
   int totalEntries = 0;
   int publicEntries = 0;
@@ -31,6 +38,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> fetchProfile() async {
+    if (!mounted) return;
+
+    setState(() {
+      profileError = null;
+      activityError = null;
+    });
+
+    final loadedUser = <String, dynamic>{};
+
+    int loadedTotalEntries = 0;
+    int loadedPublicEntries = 0;
+    int loadedPrivateEntries = 0;
+
     try {
       final token = await ApiService.getToken();
 
@@ -43,30 +63,109 @@ class _ProfilePageState extends State<ProfilePage> {
           );
 
           if (payload is Map) {
-            user = Map<String, dynamic>.from(payload);
+            loadedUser.addAll(Map<String, dynamic>.from(payload));
           }
         }
       }
+    } catch (e) {
+      debugPrint('Failed to decode user token: $e');
+    }
 
+    String? loadedProfileError;
+    String? loadedActivityError;
+
+    try {
+      final response = await ApiService.get('/users/profile');
+
+      if (response['data'] is Map) {
+        loadedUser.addAll(Map<String, dynamic>.from(response['data']));
+      }
+    } catch (e) {
+      loadedProfileError = e.toString().replaceFirst('Exception: ', '');
+      debugPrint('Failed to load profile information: $e');
+    }
+
+    try {
       final response = await ApiService.get('/entries/my');
       final entries = response['data']['entries'] as List;
 
-      totalEntries = entries.length;
+      loadedTotalEntries = entries.length;
 
-      publicEntries = entries.where((entry) {
+      loadedPublicEntries = entries.where((entry) {
         return entry['isPublic'] == true;
       }).length;
 
-      privateEntries = totalEntries - publicEntries;
+      loadedPrivateEntries = loadedTotalEntries - loadedPublicEntries;
     } catch (e) {
-      debugPrint('Failed to load profile: $e');
+      loadedActivityError = e.toString().replaceFirst('Exception: ', '');
+      debugPrint('Failed to load profile activity: $e');
     }
 
-    if (mounted) {
+    if (!mounted) return;
+
+    setState(() {
+      user = loadedUser;
+      totalEntries = loadedTotalEntries;
+      publicEntries = loadedPublicEntries;
+      privateEntries = loadedPrivateEntries;
+      profileError = loadedProfileError;
+      activityError = loadedActivityError;
+      isLoading = false;
+    });
+  }
+
+  Future<void> retryActivity() async {
+    setState(() {
+      activityError = null;
+    });
+
+    try {
+      final response = await ApiService.get('/entries/my');
+      final entries = response['data']['entries'] as List;
+
+      final newTotal = entries.length;
+
+      final newPublic = entries.where((entry) {
+        return entry['isPublic'] == true;
+      }).length;
+
+      if (!mounted) return;
+
       setState(() {
-        isLoading = false;
+        totalEntries = newTotal;
+        publicEntries = newPublic;
+        privateEntries = newTotal - newPublic;
+        activityError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        activityError = e.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  Future<void> openEditProfile() async {
+    final updatedUser = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
+    );
+
+    if (updatedUser != null && mounted) {
+      setState(() {
+        user = updatedUser;
+      });
+
+      widget.onProfileUpdated?.call();
+    }
+  }
+
+  Future<void> openChangePassword() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+    );
   }
 
   String get initials {
@@ -123,7 +222,7 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
-    if (shouldLogout != true) return;
+    if (shouldLogout != true || !mounted) return;
 
     setState(() {
       isLoggingOut = true;
@@ -183,6 +282,34 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget buildErrorMessage({
+    required String message,
+    required VoidCallback onRetry,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.primary,
+            size: 28,
+          ),
+          const SizedBox(height: 8),
+          Text(message, textAlign: TextAlign.center, style: AppTheme.bodyText),
+          const SizedBox(height: 8),
+          TextButton(onPressed: onRetry, child: const Text('Try again')),
+        ],
+      ),
+    );
+  }
+
   Widget buildInfoTile({
     required IconData icon,
     required String title,
@@ -209,7 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text(title, style: AppTheme.caption),
                 const SizedBox(height: 4),
                 Text(
-                  value,
+                  value.isEmpty ? '-' : value,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -224,10 +351,131 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget buildProfileAvatar() {
+    final photoUrl = user['profilePhotoUrl']?.toString() ?? '';
+
+    return Container(
+      width: 116,
+      height: 116,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.primarySoft,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Center(
+        child: Container(
+          width: 96,
+          height: 96,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF7771D1), AppColors.primary],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: photoUrl.isNotEmpty
+                ? Image.network(
+                    photoUrl,
+                    width: 96,
+                    height: 96,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Center(
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildChangePasswordTile() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ListTile(
+        onTap: openChangePassword,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(
+            Icons.lock_outline_rounded,
+            color: AppColors.primary,
+            size: 21,
+          ),
+        ),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        subtitle: const Text(
+          'Update your account password',
+          style: AppTheme.caption,
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget buildAccountSettings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Account Settings', style: AppTheme.sectionTitle),
+        const SizedBox(height: 14),
+        buildChangePasswordTile(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = user['name']?.toString() ?? 'Crave User';
     final email = user['email']?.toString() ?? '-';
+    final bio = user['bio']?.toString() ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -248,55 +496,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Center(
                       child: Column(
                         children: [
-                          Container(
-                            width: 116,
-                            height: 116,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primarySoft,
-                              border: Border.all(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.15,
-                                ),
-                              ),
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 96,
-                                height: 96,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF7771D1),
-                                      AppColors.primary,
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      blurRadius: 14,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    initials,
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          buildProfileAvatar(),
                           const SizedBox(height: 18),
                           Text(
                             name,
@@ -309,19 +509,49 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 6),
                           Text(email, style: AppTheme.pageSubtitle),
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: openEditProfile,
+                            icon: const Icon(Icons.edit_outlined, size: 17),
+                            label: const Text('Edit Profile'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 11,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 38),
                     const Text('Your Activity', style: AppTheme.sectionTitle),
                     const SizedBox(height: 14),
-                    buildActivityCard(),
+                    if (activityError != null)
+                      buildErrorMessage(
+                        message: 'Unable to load activity: $activityError',
+                        onRetry: retryActivity,
+                      )
+                    else
+                      buildActivityCard(),
                     const SizedBox(height: 28),
                     const Text(
                       'Account Information',
                       style: AppTheme.sectionTitle,
                     ),
                     const SizedBox(height: 12),
+                    if (profileError != null) ...[
+                      buildErrorMessage(
+                        message: 'Unable to refresh profile: $profileError',
+                        onRetry: fetchProfile,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -345,9 +575,17 @@ class _ProfilePageState extends State<ProfilePage> {
                             title: 'Email Address',
                             value: email,
                           ),
+                          const Divider(color: AppColors.border),
+                          buildInfoTile(
+                            icon: Icons.notes_rounded,
+                            title: 'Bio',
+                            value: bio,
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 32),
+                    buildAccountSettings(),
                     const SizedBox(height: 28),
                     SizedBox(
                       height: 54,

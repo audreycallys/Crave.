@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { db } from "../../config/db";
-import { foodEntriesTable } from "../../config/schema";
+import { foodEntriesTable, usersTable } from "../../config/schema";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import { and, eq, desc, or } from "drizzle-orm";
 import {
@@ -156,6 +156,7 @@ export class EntriesController {
   };
 
   // Get entry by ID
+
   getEntryById = async (req: AuthRequest, res: Response) => {
     try {
       const entryId = Number(req.params.id);
@@ -167,22 +168,38 @@ export class EntriesController {
         });
       }
 
-      const entry = await db.query.foodEntriesTable.findFirst({
-        where: and(
-          eq(foodEntriesTable.id, entryId),
-          or(
-            eq(foodEntriesTable.isPublic, true),
-            eq(foodEntriesTable.userId, req.user!.id),
+      const result = await db
+        .select({
+          entry: foodEntriesTable,
+          user: {
+            id: usersTable.id,
+            name: usersTable.name,
+            profilePhotoUrl: usersTable.profilePhotoUrl,
+          },
+        })
+        .from(foodEntriesTable)
+        .innerJoin(usersTable, eq(foodEntriesTable.userId, usersTable.id))
+        .where(
+          and(
+            eq(foodEntriesTable.id, entryId),
+            or(
+              eq(foodEntriesTable.isPublic, true),
+              eq(foodEntriesTable.userId, req.user!.id),
+            ),
           ),
-        ),
-      });
+        );
 
-      if (!entry) {
+      if (result.length === 0) {
         return res.status(404).json({
           success: false,
           message: "Entry not found",
         });
       }
+
+      const entry = {
+        ...result[0].entry,
+        user: result[0].user,
+      };
 
       return res.status(200).json({
         success: true,

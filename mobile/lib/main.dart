@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
-import 'pages/splash_page.dart';
+import 'pages/splash/splash_page.dart';
+import 'pages/splash/loading_page.dart';
 import 'services/api_service.dart';
 import 'pages/main_page.dart';
 
@@ -41,8 +42,17 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> checkToken() async {
+    final startTime = DateTime.now();
+
     try {
       final token = await ApiService.getToken();
+
+      final elapsed = DateTime.now().difference(startTime);
+      final remaining = const Duration(seconds: 1) - elapsed;
+
+      if (remaining > Duration.zero) {
+        await Future.delayed(remaining);
+      }
 
       if (!mounted) return;
 
@@ -51,6 +61,13 @@ class _AuthGateState extends State<AuthGate> {
         isChecking = false;
       });
     } catch (e) {
+      final elapsed = DateTime.now().difference(startTime);
+      final remaining = const Duration(seconds: 1) - elapsed;
+
+      if (remaining > Duration.zero) {
+        await Future.delayed(remaining);
+      }
+
       if (!mounted) return;
 
       setState(() {
@@ -63,7 +80,7 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     if (isChecking) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const LoadingPage();
     }
 
     return isLoggedIn ? const MainPage() : const SplashPage();

@@ -20,7 +20,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
-
   bool isLoading = false;
 
   @override
@@ -33,6 +32,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> handleRegister() async {
+    if (isLoading) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -53,15 +54,22 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response['message'] ?? 'Registration successful'),
+          backgroundColor: AppColors.primary,
         ),
       );
+
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
     } catch (error) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.redAccent,
         ),
       );
     } finally {
@@ -89,7 +97,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: isLoading
+                          ? null
+                          : () => Navigator.pop(context),
                       icon: const Icon(
                         Icons.arrow_back_rounded,
                         color: AppColors.textPrimary,
@@ -97,9 +107,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       padding: EdgeInsets.zero,
                       alignment: Alignment.centerLeft,
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       'Create\naccount.',
                       style: TextStyle(
@@ -110,9 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     const Text(
                       'Start saving your favorite food '
                       'experiences with Crave.',
@@ -122,9 +128,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         color: AppColors.textSecondary,
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
                     _buildLabel('Full name'),
                     _buildField(
                       controller: nameController,
@@ -137,9 +141,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 18),
-
                     _buildLabel('Email address'),
                     _buildField(
                       controller: emailController,
@@ -147,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Email cannot be empty';
                         }
                         if (!value.contains('@')) {
@@ -156,9 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 18),
-
                     _buildLabel('Password'),
                     _buildField(
                       controller: passwordController,
@@ -166,11 +166,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       icon: Icons.lock_outline_rounded,
                       obscureText: !isPasswordVisible,
                       suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            isPasswordVisible = !isPasswordVisible;
-                          });
-                        },
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  isPasswordVisible = !isPasswordVisible;
+                                });
+                              },
                         icon: Icon(
                           isPasswordVisible
                               ? Icons.visibility_outlined
@@ -188,9 +190,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 18),
-
                     _buildLabel('Confirm password'),
                     _buildField(
                       controller: confirmPasswordController,
@@ -198,12 +198,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       icon: Icons.lock_outline_rounded,
                       obscureText: !isConfirmPasswordVisible,
                       suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            isConfirmPasswordVisible =
-                                !isConfirmPasswordVisible;
-                          });
-                        },
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  isConfirmPasswordVisible =
+                                      !isConfirmPasswordVisible;
+                                });
+                              },
                         icon: Icon(
                           isConfirmPasswordVisible
                               ? Icons.visibility_outlined
@@ -221,9 +223,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 30),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -240,9 +240,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             : const Text('Create Account'),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -255,7 +253,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: isLoading
+                                ? null
+                                : () => Navigator.pop(context),
                             child: const Text(
                               'Sign In',
                               style: TextStyle(
@@ -302,8 +302,11 @@ class _RegisterPageState extends State<RegisterPage> {
   }) {
     return TextFormField(
       controller: controller,
+      enabled: !isLoading,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      enableSuggestions: !obscureText,
+      autocorrect: false,
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,

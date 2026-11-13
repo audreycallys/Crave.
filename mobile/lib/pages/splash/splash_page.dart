@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
-import '../widgets/food_diary_calendar.dart';
-import 'auth/login_page.dart';
+import '../../core/theme/app_colors.dart';
+import '../../widgets/food_diary_calendar.dart';
+import '../auth/login_page.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -75,19 +75,6 @@ class SplashPage extends StatelessWidget {
                               },
                               icon: const Icon(Icons.arrow_forward_rounded),
                               label: const Text('Get Started'),
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          const Center(
-                            child: Text(
-                              'Save every flavor, remember every moment.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ],

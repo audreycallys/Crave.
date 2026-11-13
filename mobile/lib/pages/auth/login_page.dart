@@ -29,6 +29,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> handleLogin() async {
+    if (isLoading) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -57,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.redAccent,
         ),
       );
     } finally {
@@ -89,9 +91,7 @@ class _LoginPageState extends State<LoginPage> {
                       size: 36,
                       color: AppColors.primary,
                     ),
-
                     const SizedBox(height: 35),
-
                     const Text(
                       'Welcome\nback!',
                       style: TextStyle(
@@ -102,9 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     const Text(
                       'Sign in to continue your culinary journey '
                       'and keep your food memories close.',
@@ -114,9 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppColors.textSecondary,
                       ),
                     ),
-
                     const SizedBox(height: 35),
-
                     const Text(
                       'Email address',
                       style: TextStyle(
@@ -125,11 +121,10 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
                     TextFormField(
                       controller: emailController,
+                      enabled: !isLoading,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: 'Enter your email',
@@ -156,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Email cannot be empty';
                         }
                         if (!value.contains('@')) {
@@ -165,9 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 22),
-
                     const Text(
                       'Password',
                       style: TextStyle(
@@ -176,12 +169,13 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
                     TextFormField(
                       controller: passwordController,
+                      enabled: !isLoading,
                       obscureText: !isPasswordVisible,
+                      enableSuggestions: false,
+                      autocorrect: false,
                       decoration: InputDecoration(
                         hintText: 'Enter your password',
                         prefixIcon: const Icon(
@@ -189,11 +183,13 @@ class _LoginPageState extends State<LoginPage> {
                           color: AppColors.textSecondary,
                         ),
                         suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              isPasswordVisible = !isPasswordVisible;
-                            });
-                          },
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    isPasswordVisible = !isPasswordVisible;
+                                  });
+                                },
                           icon: Icon(
                             isPasswordVisible
                                 ? Icons.visibility_outlined
@@ -226,9 +222,7 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 30),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -245,9 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                             : const Text('Sign In'),
                       ),
                     ),
-
                     const SizedBox(height: 25),
-
                     Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -260,14 +252,17 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const RegisterPage(),
-                                ),
-                              );
-                            },
+                            onPressed: isLoading
+                                ? null
+                                : () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RegisterPage(),
+                                      ),
+                                    );
+                                  },
                             child: const Text(
                               'Register',
                               style: TextStyle(

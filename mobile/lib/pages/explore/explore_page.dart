@@ -119,7 +119,7 @@ class ExplorePageState extends State<ExplorePage> {
         const Text('Explore', style: AppTheme.pageTitle),
         const SizedBox(height: 8),
         const Text(
-          'Discover new flavors shared by the Crave community.',
+          'Find something delicious from the community.',
           style: AppTheme.bodyText,
         ),
       ],
@@ -182,7 +182,7 @@ class ExplorePageState extends State<ExplorePage> {
         const Text('Categories', style: AppTheme.sectionTitle),
         const SizedBox(height: 6),
         Text(
-          '${entries.length} experiences · $foodCount food · $drinkCount drinks',
+          '${entries.length} posts · $foodCount food · $drinkCount drinks',
           style: AppTheme.caption,
         ),
         const SizedBox(height: 14),
@@ -207,7 +207,7 @@ class ExplorePageState extends State<ExplorePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Discover experiences', style: AppTheme.sectionTitle),
+            const Text('Explore posts', style: AppTheme.sectionTitle),
             Text('${results.length} posts', style: AppTheme.caption),
           ],
         ),
@@ -230,16 +230,16 @@ class ExplorePageState extends State<ExplorePage> {
         else if (entries.isEmpty)
           _buildMessage(
             icon: Icons.explore_outlined,
-            title: 'Nothing to explore yet',
+            title: 'Nothing here yet',
             description:
-                'There are no public experiences available yet. Check back later!',
+                'There are no public posts available yet. Check back later!',
             buttonText: 'Refresh',
             onPressed: fetchEntries,
           )
         else if (results.isEmpty)
           _buildMessage(
             icon: Icons.search_off_rounded,
-            title: 'No experiences found',
+            title: 'No posts found',
             description: 'Try another keyword or choose a different category.',
             buttonText: 'Clear filters',
             onPressed: () {
@@ -259,7 +259,7 @@ class ExplorePageState extends State<ExplorePage> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 14,
-              childAspectRatio: 0.55,
+              childAspectRatio: 0.58,
             ),
             itemBuilder: (context, index) {
               return EntryGridCard(

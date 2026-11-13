@@ -6,7 +6,8 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:5000/api';
+  // static const String _baseUrl = 'http://localhost:5000/api';
+  static const String _baseUrl = 'http://192.168.1.4:5000/api';
   static const String _tokenKey = 'token';
 
   static Future<void> saveToken(String token) async {
@@ -213,5 +214,21 @@ class ApiService {
     final response = await http.Response.fromStream(streamedResponse);
 
     return _handleResponse(response);
+  }
+
+  static Future<dynamic> getComments(String entryId) async {
+    return get('/comments/entries/$entryId');
+  }
+
+  static Future<dynamic> createComment(String entryId, String content) async {
+    return post('/comments/entries/$entryId', {'content': content});
+  }
+
+  static Future<dynamic> updateComment(String commentId, String content) async {
+    return put('/comments/$commentId', {'content': content});
+  }
+
+  static Future<dynamic> deleteComment(String commentId) async {
+    return delete('/comments/$commentId');
   }
 }
